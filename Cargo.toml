@@ -6,6 +6,7 @@ members = [
     "persistence",
     "sensor-adapter-sdk",
     "normalization",
+    "track-management",
 ]
 
 # Additional workspace members are added incrementally per phase.
