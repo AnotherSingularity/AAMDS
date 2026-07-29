@@ -2,6 +2,8 @@
 resolver = "2"
 members = [
     "contracts",
+    "core-runtime",
+    "persistence",
 ]
 
 # Additional workspace members are added incrementally per phase.

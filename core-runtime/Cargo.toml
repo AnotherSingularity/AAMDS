@@ -1,0 +1,22 @@
+[package]
+name         = "aeon-core-runtime"
+version      = { workspace = true }
+edition      = { workspace = true }
+license      = { workspace = true }
+publish      = false
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+aeon-contracts = { path = "../contracts" }
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+thiserror   = { workspace = true }
+tokio       = { workspace = true }
+tracing     = { workspace = true }
+tracing-subscriber = { workspace = true }
+time        = { workspace = true }
+uuid        = { workspace = true }
+sha2        = { workspace = true }
+hex         = { workspace = true }
