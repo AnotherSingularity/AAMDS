@@ -1,5 +1,11 @@
 /target
 **/target
+/.aeon-tools/
+docs/evidence/**/*.json.tmp
+docs/evidence/**/*.raw.json
+docs/evidence/**/*.stderr.txt
+docs/evidence/**/*.stderr.log
+docs/evidence/**/*.stdout.log
 node_modules
 dist
 .env
