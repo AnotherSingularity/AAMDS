@@ -8,7 +8,7 @@
 //!     (and reported through the returned `TrackUpdate.rejected_observations`).
 //!   * Conflicting classification claims raise the track's `conflict_state`.
 //!   * Deterministic sequence numbers are strictly monotonic per track.
-//!   * No engagement, weapon, firing, or aimpoint output is produced.
+//!   * No prohibited-concept output is produced (see contracts::prohibited).
 //!
 //! Real production deployments will replace the gating with a Kalman /
 //! IMM / JPDA filter as an implementation of the `TrackEngine` trait; the

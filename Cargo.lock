@@ -75,6 +75,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "aeon-secure-relay"
+version = "0.1.0"
+dependencies = [
+ "aeon-contracts",
+ "hex",
+ "serde",
+ "serde_json",
+ "sha2",
+ "thiserror",
+ "time",
+ "uuid",
+]
+
+[[package]]
 name = "aeon-sensor-adapter-sdk"
 version = "0.1.0"
 dependencies = [
