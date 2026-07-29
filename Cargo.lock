@@ -34,6 +34,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "aeon-ml-correction"
+version = "0.1.0"
+dependencies = [
+ "aeon-contracts",
+ "hex",
+ "serde",
+ "serde_json",
+ "sha2",
+ "thiserror",
+ "time",
+ "uuid",
+]
+
+[[package]]
 name = "aeon-normalization"
 version = "0.1.0"
 dependencies = [
