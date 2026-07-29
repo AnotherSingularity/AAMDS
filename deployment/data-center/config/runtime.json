@@ -1,0 +1,10 @@
+{
+  "runtime_id": "aeon-data-center",
+  "build_id": "0.1.0",
+  "max_ingest_queue": 1024,
+  "max_relay_queue": 1024,
+  "freshness_seconds": 30,
+  "clock_drift_tolerance_ms": 500,
+  "scope_boundary_scan_outbound": true,
+  "allow_unsigned_sources": false
+}
