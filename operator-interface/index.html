@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Aeon — Recognized Operational Picture</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    :root {
+      --fg: #ddd; --bg: #101418; --panel: #171d24;
+      --border: #2b333d; --accent: #8ab4ff;
+      --warn: #d9a94a; --err: #d97a6a; --ok: #6ad9a4;
+      --font: ui-monospace, "JetBrains Mono", Menlo, Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    body { margin:0; font-family:var(--font); color:var(--fg); background:var(--bg); font-size:13px; }
+    header { padding:8px 12px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+    header .badge { padding:2px 6px; border-radius:4px; background:var(--panel); border:1px solid var(--border); }
+    main { display:grid; grid-template-columns: 320px 1fr 360px; gap:0; height:calc(100vh - 42px); }
+    section { border-right:1px solid var(--border); overflow:auto; }
+    section:last-child { border-right:none; }
+    h2 { font-size:12px; text-transform:uppercase; letter-spacing:0.1em; padding:8px 12px; margin:0; color:var(--accent); border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--bg); }
+    ul { list-style:none; margin:0; padding:0; }
+    li { padding:6px 12px; border-bottom:1px solid var(--border); cursor:pointer; }
+    li:hover { background:var(--panel); }
+    li.selected { background:var(--panel); border-left:3px solid var(--accent); }
+    .k { color:#889; }
+    .v { color:var(--fg); }
+    .warn { color:var(--warn); }
+    .err  { color:var(--err); }
+    .ok   { color:var(--ok); }
+    pre { background:var(--panel); padding:12px; overflow:auto; margin:0; white-space:pre-wrap; word-break:break-all; }
+    .row { display:flex; justify-content:space-between; padding:2px 12px; }
+    .empty { padding:12px; color:#889; }
+    button { background:var(--panel); color:var(--fg); border:1px solid var(--border); padding:4px 10px; font-family:var(--font); cursor:pointer; }
+    .replay { background:var(--warn); color:#111; padding:2px 6px; border-radius:4px; }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <strong>Aeon</strong> — Recognized Operational Picture
+      <span id="replay-badge" class="replay" style="display:none">REPLAY MODE</span>
+    </div>
+    <div>
+      <span class="badge" id="build-id">build?</span>
+      <span class="badge" id="cfg-id">cfg?</span>
+      <span class="badge" id="rt-id">rt?</span>
+    </div>
+  </header>
+  <main>
+    <section>
+      <h2>Tracks</h2>
+      <ul id="track-list"><li class="empty">no tracks</li></ul>
+    </section>
+    <section>
+      <h2>Detail</h2>
+      <div id="detail"><div class="empty">select a track</div></div>
+    </section>
+    <section>
+      <h2>Health</h2>
+      <div id="health"><div class="empty">no health</div></div>
+      <h2>Alerts</h2>
+      <div id="alerts"><div class="empty">no alerts</div></div>
+    </section>
+  </main>
+<script>
+const API = (window.AEON_API || "http://127.0.0.1:8080");
+let selectedId = null;
+
+async function getJson(p) {
+  const r = await fetch(API + p);
+  if (!r.ok) throw new Error(p + ": " + r.status);
+  return r.json();
+}
+async function postJson(p, body) {
+  const r = await fetch(API + p, { method: "POST", headers: {"content-type":"application/json"}, body: JSON.stringify(body) });
+  if (!r.ok) throw new Error(p + ": " + r.status);
+  return r.json();
+}
+
+function el(tag, attrs, children) {
+  const e = document.createElement(tag);
+  for (const [k,v] of Object.entries(attrs||{})) {
+    if (k === "class") e.className = v;
+    else if (k === "onclick") e.onclick = v;
+    else e.setAttribute(k, v);
+  }
+  for (const c of children||[]) e.append(c);
+  return e;
+}
+function row(k, v, cls) {
+  return el("div", {class:"row"}, [
+    el("span", {class:"k"}, [k]),
+    el("span", {class:"v "+(cls||"")}, [String(v)]),
+  ]);
+}
+function knownState(k) {
+  if (!k) return "unknown";
+  return k.state || "unknown";
+}
+
+async function refresh() {
+  try {
+    const v = await getJson("/api/v1/version");
+    document.getElementById("build-id").textContent = "build "+v.build_id;
+    document.getElementById("cfg-id").textContent   = "cfg "+v.configuration_version;
+    document.getElementById("rt-id").textContent    = v.runtime_id;
+  } catch (e) {}
+  try {
+    const rs = await getJson("/api/v1/replay/status");
+    document.getElementById("replay-badge").style.display = rs.replay_mode ? "inline" : "none";
+  } catch (e) {}
+  try { renderTracks(await getJson("/api/v1/tracks")); }
+  catch (e) { document.getElementById("track-list").innerHTML = '<li class="empty err">'+e+'</li>'; }
+  try { renderHealth(await getJson("/api/v1/health")); }
+  catch (e) {}
+  try { renderAlerts(await getJson("/api/v1/alerts")); }
+  catch (e) {}
+}
+
+function renderTracks(tracks) {
+  const ul = document.getElementById("track-list");
+  ul.innerHTML = "";
+  if (!tracks.length) { ul.append(el("li",{class:"empty"},["no tracks"])); return; }
+  for (const t of tracks) {
+    const cls = t.track_id === selectedId ? "selected" : "";
+    const conflict = t.conflict_state !== "none" ? " ⚠" : "";
+    const li = el("li", {class:cls, onclick:()=>{ selectedId=t.track_id; refreshDetail(t); refresh(); }}, [
+      el("strong", {}, [t.track_id.substring(0,8)+conflict]),
+      el("div", {class:"k"}, [
+        t.status + " · conf " + (t.confidence*100).toFixed(0) + "% · " + t.freshness_state
+      ]),
+    ]);
+    ul.append(li);
+  }
+}
+
+function renderHealth(h) {
+  const d = document.getElementById("health");
+  d.innerHTML = "";
+  d.append(row("runtime", h.runtime_state, h.runtime_state === "ready" ? "ok" : "warn"));
+  d.append(row("storage", h.storage, h.storage === "healthy" ? "ok" : "warn"));
+  d.append(row("time", h.time_source));
+  d.append(row("cfg", h.configuration_version));
+  d.append(row("build", h.build_id));
+  d.append(row("degraded", h.degraded_capabilities.join(",")||"none",
+    h.degraded_capabilities.length?"warn":"ok"));
+  d.append(row("adapters", h.adapters.length));
+  d.append(row("sensors", h.sensor_feeds.length));
+  d.append(row("relay dests", h.relay.length));
+}
+function renderAlerts(alerts) {
+  const d = document.getElementById("alerts");
+  d.innerHTML = "";
+  if (!alerts.length) { d.append(el("div",{class:"empty"},["no alerts"])); return; }
+  for (const a of alerts) {
+    const b = el("div", {class:"row"}, [
+      el("div", {}, [
+        el("strong", {class: a.severity==="critical"?"err":a.severity==="warning"?"warn":"ok"}, [a.severity.toUpperCase()]),
+        " · ",
+        a.category + " · " + a.human_summary,
+      ]),
+      a.acknowledgment === "acknowledged" ? el("span",{class:"ok"},["ack"]) :
+        el("button", {onclick: async ()=>{ await postJson("/api/v1/alerts/"+a.alert_id+"/acknowledge",{actor:"operator"}); refresh(); }}, ["ack"]),
+    ]);
+    d.append(b);
+  }
+}
+
+function refreshDetail(t) {
+  const d = document.getElementById("detail");
+  d.innerHTML = "";
+  d.append(row("id", t.track_id));
+  d.append(row("status", t.status));
+  d.append(row("conflict", t.conflict_state, t.conflict_state === "none" ? "" : "warn"));
+  d.append(row("freshness", t.freshness_state, t.freshness_state === "fresh" ? "ok" : "warn"));
+  d.append(row("confidence", (t.confidence*100).toFixed(1)+"%"));
+  d.append(row("position", knownState(t.kinematic_state.position)));
+  d.append(row("velocity",
+    knownState(t.kinematic_state.velocity_east_ms) + "/" +
+    knownState(t.kinematic_state.velocity_north_ms) + "/" +
+    knownState(t.kinematic_state.velocity_up_ms)
+  ));
+  d.append(row("uncertainty", knownState(t.state_uncertainty.position)));
+  d.append(row("sources", t.source_contributions.length));
+  d.append(row("integrity", JSON.stringify(t.integrity)));
+  d.append(row("algo", t.track_algorithm_version));
+  d.append(el("pre", {}, [JSON.stringify(t, null, 2)]));
+}
+
+refresh();
+setInterval(refresh, 2000);
+</script>
+</body>
+</html>

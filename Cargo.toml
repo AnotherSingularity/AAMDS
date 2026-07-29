@@ -9,6 +9,7 @@ members = [
     "track-management",
     "ml-correction",
     "secure-relay",
+    "operator-api",
 ]
 
 # Additional workspace members are added incrementally per phase.
