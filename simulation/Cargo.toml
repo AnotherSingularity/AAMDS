@@ -1,0 +1,24 @@
+[package]
+name         = "aeon-simulation"
+version      = { workspace = true }
+edition      = { workspace = true }
+license      = { workspace = true }
+publish      = false
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+aeon-contracts       = { path = "../contracts" }
+aeon-sensor-adapter-sdk = { path = "../sensor-adapter-sdk" }
+aeon-normalization   = { path = "../normalization" }
+aeon-track-management = { path = "../track-management" }
+anyhow      = { workspace = true }
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+time        = { workspace = true }
+sha2        = { workspace = true }
+hex         = { workspace = true }
+
+[dev-dependencies]
+tempfile    = { workspace = true }

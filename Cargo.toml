@@ -10,6 +10,7 @@ members = [
     "ml-correction",
     "secure-relay",
     "operator-api",
+    "simulation",
 ]
 
 # Additional workspace members are added incrementally per phase.

@@ -127,6 +127,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "aeon-simulation"
+version = "0.1.0"
+dependencies = [
+ "aeon-contracts",
+ "aeon-normalization",
+ "aeon-sensor-adapter-sdk",
+ "aeon-track-management",
+ "anyhow",
+ "hex",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tempfile",
+ "time",
+]
+
+[[package]]
 name = "aeon-track-management"
 version = "0.1.0"
 dependencies = [
