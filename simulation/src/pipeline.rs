@@ -32,8 +32,11 @@ pub fn run_pipeline<A: SensorAdapter>(
     loop {
         let obs = match adapter.next_observation() {
             Ok(Some(o)) => o,
-            Ok(None)    => break,
-            Err(_)      => { rejected += 1; continue; }
+            Ok(None) => break,
+            Err(_) => {
+                rejected += 1;
+                continue;
+            }
         };
         seq += 1;
 
@@ -58,7 +61,10 @@ pub fn run_pipeline<A: SensorAdapter>(
 
         let normalized = match aeon_normalization::normalize(&obs, provenance) {
             Ok(n) => n,
-            Err(_) => { rejected += 1; continue; }
+            Err(_) => {
+                rejected += 1;
+                continue;
+            }
         };
         match engine.ingest(&normalized, now_supplier()) {
             IngestOutcome::Initiated(u) | IngestOutcome::Updated(u) => updates.push(u),

@@ -12,7 +12,11 @@ pub enum CoordinateReference {
     /// Earth-Centred, Earth-Fixed (X, Y, Z).
     Ecef,
     /// Local East-North-Up relative to a declared origin.
-    Enu { origin_lat_deg: f64, origin_lon_deg: f64, origin_alt_m: f64 },
+    Enu {
+        origin_lat_deg: f64,
+        origin_lon_deg: f64,
+        origin_alt_m: f64,
+    },
     /// Sensor-local range-bearing-elevation.
     RangeBearingElevation,
     /// Unknown frame — must be rejected by normalization.

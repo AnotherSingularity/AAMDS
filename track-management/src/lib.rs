@@ -22,8 +22,8 @@ use aeon_contracts::ids::TrackId;
 use aeon_contracts::observation::NormalizedObservation;
 use aeon_contracts::provenance::Integrity;
 use aeon_contracts::track::{
-    ClassificationHypothesis, ConflictState, CorrelationRationale, FreshnessState,
-    KinematicState, SourceContribution, StateUncertainty, Track, TrackStatus, TrackUpdate,
+    ClassificationHypothesis, ConflictState, CorrelationRationale, FreshnessState, KinematicState,
+    SourceContribution, StateUncertainty, Track, TrackStatus, TrackUpdate,
 };
 use aeon_contracts::uncertainty::Confidence;
 use aeon_contracts::unknown::Known;
@@ -64,7 +64,10 @@ pub enum IngestOutcome {
     /// Observation initiated a new track.
     Initiated(TrackUpdate),
     /// Observation was rejected. It is still recorded via the update record.
-    Rejected { observation_id: String, reason: String },
+    Rejected {
+        observation_id: String,
+        reason: String,
+    },
 }
 
 /// Deterministic track engine.
@@ -80,7 +83,10 @@ pub struct TrackEngine {
 
 impl TrackEngine {
     pub fn new(policy: TrackPolicy) -> Self {
-        Self { policy, ..Self::default() }
+        Self {
+            policy,
+            ..Self::default()
+        }
     }
 
     pub fn tracks(&self) -> impl Iterator<Item = &Track> {
@@ -125,15 +131,19 @@ impl TrackEngine {
         let assoc_id = self.find_association(canon_pos);
         match assoc_id {
             Some(id) => IngestOutcome::Updated(self.update_track(id, obs, *canon_pos, now)),
-            None      => IngestOutcome::Initiated(self.initiate_track(obs, *canon_pos, now)),
+            None => IngestOutcome::Initiated(self.initiate_track(obs, *canon_pos, now)),
         }
     }
 
     fn find_association(&self, pos: &CanonicalPosition) -> Option<TrackId> {
         let mut best: Option<(TrackId, f64)> = None;
         for (id, t) in &self.tracks {
-            if matches!(t.status, TrackStatus::Retired) { continue; }
-            let Known::Known { value: p } = &t.kinematic_state.position else { continue; };
+            if matches!(t.status, TrackStatus::Retired) {
+                continue;
+            }
+            let Known::Known { value: p } = &t.kinematic_state.position else {
+                continue;
+            };
             let d = great_circle_distance_m(p, pos);
             if d <= self.policy.correlation_gate_m {
                 match best {
@@ -175,11 +185,15 @@ impl TrackEngine {
                 position: obs.position_uncertainty.clone(),
                 velocity: Known::Unknown,
             },
-            classification_hypotheses: obs.classification_claims.iter().map(|l| ClassificationHypothesis {
-                label: l.clone(),
-                confidence: Confidence::new(self.policy.initiation_confidence).unwrap(),
-                supporting_source_count: 1,
-            }).collect(),
+            classification_hypotheses: obs
+                .classification_claims
+                .iter()
+                .map(|l| ClassificationHypothesis {
+                    label: l.clone(),
+                    confidence: Confidence::new(self.policy.initiation_confidence).unwrap(),
+                    supporting_source_count: 1,
+                })
+                .collect(),
             confidence: Confidence::new(self.policy.initiation_confidence).unwrap(),
             source_contributions: vec![SourceContribution {
                 source_system: obs.provenance.source_system.clone(),
@@ -221,7 +235,11 @@ impl TrackEngine {
         pos: CanonicalPosition,
         now: OffsetDateTime,
     ) -> TrackUpdate {
-        let prior = self.tracks.get(&id).cloned().expect("assoc yielded missing track");
+        let prior = self
+            .tracks
+            .get(&id)
+            .cloned()
+            .expect("assoc yielded missing track");
         let mut new_track = prior.clone();
         new_track.last_updated_at = now;
         new_track.kinematic_state.position = Known::Known { value: pos };
@@ -230,10 +248,9 @@ impl TrackEngine {
         new_track.freshness_state = FreshnessState::Fresh;
 
         // Source contribution update
-        if let Some(sc) = new_track.source_contributions.iter_mut()
-            .find(|sc| sc.sensor == obs.provenance.sensor
-                    && sc.source_system == obs.provenance.source_system)
-        {
+        if let Some(sc) = new_track.source_contributions.iter_mut().find(|sc| {
+            sc.sensor == obs.provenance.sensor && sc.source_system == obs.provenance.source_system
+        }) {
             sc.weight += 1.0;
             sc.last_contributed_at = now;
         } else {
@@ -249,17 +266,26 @@ impl TrackEngine {
         // marks a classification conflict.
         let mut new_conflict_labels = Vec::new();
         for label in &obs.classification_claims {
-            if !new_track.classification_hypotheses.iter().any(|h| &h.label == label) {
+            if !new_track
+                .classification_hypotheses
+                .iter()
+                .any(|h| &h.label == label)
+            {
                 new_conflict_labels.push(label.clone());
-                new_track.classification_hypotheses.push(ClassificationHypothesis {
-                    label: label.clone(),
-                    confidence: Confidence::new(0.3).unwrap(),
-                    supporting_source_count: 1,
-                });
+                new_track
+                    .classification_hypotheses
+                    .push(ClassificationHypothesis {
+                        label: label.clone(),
+                        confidence: Confidence::new(0.3).unwrap(),
+                        supporting_source_count: 1,
+                    });
             }
         }
         if !new_conflict_labels.is_empty()
-            && !matches!(new_track.conflict_state, ConflictState::ClassificationConflict | ConflictState::MultipleConflicts)
+            && !matches!(
+                new_track.conflict_state,
+                ConflictState::ClassificationConflict | ConflictState::MultipleConflicts
+            )
         {
             new_track.conflict_state = ConflictState::ClassificationConflict;
         }
@@ -270,10 +296,13 @@ impl TrackEngine {
         let new_conf = (prior.confidence.get() * 0.7 + 0.3).min(1.0);
         new_track.confidence = Confidence::new(new_conf).unwrap();
 
-        let uncertainty_delta_m = match (&prior.state_uncertainty.position, &new_track.state_uncertainty.position) {
+        let uncertainty_delta_m = match (
+            &prior.state_uncertainty.position,
+            &new_track.state_uncertainty.position,
+        ) {
             (Known::Known { value: p_prior }, Known::Known { value: p_new }) => {
                 let prev = (p_prior.sigma_east_m.powi(2) + p_prior.sigma_north_m.powi(2)).sqrt();
-                let now  = (p_new.sigma_east_m.powi(2)  + p_new.sigma_north_m.powi(2)).sqrt();
+                let now = (p_new.sigma_east_m.powi(2) + p_new.sigma_north_m.powi(2)).sqrt();
                 now - prev
             }
             _ => 0.0,
@@ -331,7 +360,9 @@ fn min_integrity(a: &Integrity, b: &Integrity) -> Integrity {
     }
     let (weaker, stronger) = if rank(a) <= rank(b) { (a, b) } else { (b, a) };
     let _ = stronger;
-    Integrity::Derived { min_upstream: Box::new(weaker.clone()) }
+    Integrity::Derived {
+        min_upstream: Box::new(weaker.clone()),
+    }
 }
 
 fn great_circle_distance_m(a: &CanonicalPosition, b: &CanonicalPosition) -> f64 {
@@ -354,7 +385,9 @@ mod tests {
     use aeon_contracts::uncertainty::PositionUncertainty;
     use aeon_contracts::version::normalized_schema;
 
-    fn now() -> OffsetDateTime { OffsetDateTime::UNIX_EPOCH }
+    fn now() -> OffsetDateTime {
+        OffsetDateTime::UNIX_EPOCH
+    }
 
     fn obs(lat: f64, lon: f64, t_offset_s: f64, seq: u64) -> NormalizedObservation {
         NormalizedObservation {
@@ -362,8 +395,20 @@ mod tests {
             source_observation: ObservationId::new(),
             canonical_timestamp: now() + time::Duration::seconds_f64(t_offset_s),
             time_quality: TimeQuality::Disciplined,
-            position: Known::Known { value: CanonicalPosition { latitude_deg: lat, longitude_deg: lon, altitude_m: 3000.0 } },
-            position_uncertainty: Known::Known { value: PositionUncertainty { sigma_east_m: 5.0, sigma_north_m: 5.0, sigma_up_m: 20.0 } },
+            position: Known::Known {
+                value: CanonicalPosition {
+                    latitude_deg: lat,
+                    longitude_deg: lon,
+                    altitude_m: 3000.0,
+                },
+            },
+            position_uncertainty: Known::Known {
+                value: PositionUncertainty {
+                    sigma_east_m: 5.0,
+                    sigma_north_m: 5.0,
+                    sigma_up_m: 20.0,
+                },
+            },
             velocity_uncertainty: Known::Unknown,
             coordinate_quality: CoordinateQuality::Good,
             classification_claims: vec!["friendly_air".into()],
@@ -437,20 +482,27 @@ mod tests {
         o2.classification_claims = vec!["adversary_air".into()];
         let out = e.ingest(&o2, now());
         if let IngestOutcome::Updated(u) = out {
-            assert_eq!(u.new_state.conflict_state, ConflictState::ClassificationConflict);
-        } else { panic!(); }
+            assert_eq!(
+                u.new_state.conflict_state,
+                ConflictState::ClassificationConflict
+            );
+        } else {
+            panic!();
+        }
     }
 
     #[test]
     fn deterministic_sequence_is_monotonic_per_track() {
         let mut e = TrackEngine::new(TrackPolicy::default());
-        let updates: Vec<_> = (0..5).map(|i| {
-            let o = obs(40.0 + i as f64 * 1e-5, -74.0, i as f64 * 0.1, i as u64 + 1);
-            match e.ingest(&o, now()) {
-                IngestOutcome::Initiated(u) | IngestOutcome::Updated(u) => u,
-                _ => panic!(),
-            }
-        }).collect();
+        let updates: Vec<_> = (0..5)
+            .map(|i| {
+                let o = obs(40.0 + i as f64 * 1e-5, -74.0, i as f64 * 0.1, i as u64 + 1);
+                match e.ingest(&o, now()) {
+                    IngestOutcome::Initiated(u) | IngestOutcome::Updated(u) => u,
+                    _ => panic!(),
+                }
+            })
+            .collect();
         // Same track for all — sequence 1..=5 monotonic.
         let id = updates[0].track_id;
         assert!(updates.iter().all(|u| u.track_id == id));
@@ -491,11 +543,15 @@ mod tests {
     fn ingesting_the_same_sequence_twice_produces_equivalent_state() {
         let mut e1 = TrackEngine::new(TrackPolicy::default());
         let mut e2 = TrackEngine::new(TrackPolicy::default());
-        let inputs: Vec<_> = (0..10).map(|i|
-            obs(40.0 + i as f64 * 1e-5, -74.0, i as f64 * 0.05, i + 1)
-        ).collect();
-        for o in &inputs { e1.ingest(o, now()); }
-        for o in &inputs { e2.ingest(o, now()); }
+        let inputs: Vec<_> = (0..10)
+            .map(|i| obs(40.0 + i as f64 * 1e-5, -74.0, i as f64 * 0.05, i + 1))
+            .collect();
+        for o in &inputs {
+            e1.ingest(o, now());
+        }
+        for o in &inputs {
+            e2.ingest(o, now());
+        }
         // Same number of tracks, same statuses, same track_algorithm_version.
         assert_eq!(e1.tracks().count(), e2.tracks().count());
     }

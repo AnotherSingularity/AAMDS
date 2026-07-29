@@ -55,7 +55,10 @@ mod tests {
     fn known_value_is_trusted_others_are_not() {
         let k = Known::Known { value: 5u32 };
         assert!(k.is_trusted());
-        let s = Known::Stale { value: 5u32, age_seconds: 60.0 };
+        let s = Known::Stale {
+            value: 5u32,
+            age_seconds: 60.0,
+        };
         assert!(!s.is_trusted());
         let u = Known::<u32>::Unknown;
         assert!(!u.is_trusted());

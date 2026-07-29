@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 
 use crate::ids::{AdapterId, DestinationId, SensorId};
-use crate::version::{SchemaVersion, health_schema};
+use crate::version::{health_schema, SchemaVersion};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -80,5 +80,7 @@ pub struct SystemHealth {
 }
 
 impl SystemHealth {
-    pub fn schema() -> SchemaVersion { health_schema() }
+    pub fn schema() -> SchemaVersion {
+        health_schema()
+    }
 }

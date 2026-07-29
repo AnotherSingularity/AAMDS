@@ -48,7 +48,15 @@ async fn body_string(r: axum::http::Response<Body>) -> String {
 #[tokio::test]
 async fn version_returns_build_and_config_and_contract_list() {
     let app = build_router(state());
-    let r = app.oneshot(Request::builder().uri("/api/v1/version").body(Body::empty()).unwrap()).await.unwrap();
+    let r = app
+        .oneshot(
+            Request::builder()
+                .uri("/api/v1/version")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
     assert_eq!(r.status(), StatusCode::OK);
     let s = body_string(r).await;
     assert!(s.contains("track:1.0"));
@@ -59,7 +67,15 @@ async fn version_returns_build_and_config_and_contract_list() {
 #[tokio::test]
 async fn tracks_endpoint_returns_empty_when_engine_empty() {
     let app = build_router(state());
-    let r = app.oneshot(Request::builder().uri("/api/v1/tracks").body(Body::empty()).unwrap()).await.unwrap();
+    let r = app
+        .oneshot(
+            Request::builder()
+                .uri("/api/v1/tracks")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
     assert_eq!(r.status(), StatusCode::OK);
     let s = body_string(r).await;
     assert_eq!(s, "[]");
@@ -68,9 +84,15 @@ async fn tracks_endpoint_returns_empty_when_engine_empty() {
 #[tokio::test]
 async fn get_track_404_when_missing() {
     let app = build_router(state());
-    let r = app.oneshot(Request::builder()
-        .uri("/api/v1/tracks/00000000-0000-0000-0000-000000000000")
-        .body(Body::empty()).unwrap()).await.unwrap();
+    let r = app
+        .oneshot(
+            Request::builder()
+                .uri("/api/v1/tracks/00000000-0000-0000-0000-000000000000")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
     assert_eq!(r.status(), StatusCode::NOT_FOUND);
 }
 
@@ -94,19 +116,36 @@ async fn alert_acknowledgment_flips_state() {
     });
     let app = build_router(s.clone());
     let uri = format!("/api/v1/alerts/{}/acknowledge", alert_id.0);
-    let r = app.oneshot(Request::builder()
-        .method("POST").uri(&uri)
-        .header("content-type", "application/json")
-        .body(Body::from(r#"{"actor":"tester"}"#))
-        .unwrap()).await.unwrap();
+    let r = app
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri(&uri)
+                .header("content-type", "application/json")
+                .body(Body::from(r#"{"actor":"tester"}"#))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
     assert_eq!(r.status(), StatusCode::OK);
-    assert_eq!(s.alerts.lock().unwrap()[0].acknowledgment, AlertAcknowledgment::Acknowledged);
+    assert_eq!(
+        s.alerts.lock().unwrap()[0].acknowledgment,
+        AlertAcknowledgment::Acknowledged
+    );
 }
 
 #[tokio::test]
 async fn replay_status_defaults_false() {
     let app = build_router(state());
-    let r = app.oneshot(Request::builder().uri("/api/v1/replay/status").body(Body::empty()).unwrap()).await.unwrap();
+    let r = app
+        .oneshot(
+            Request::builder()
+                .uri("/api/v1/replay/status")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
     let s = body_string(r).await;
     assert!(s.contains("\"replay_mode\":false"));
 }

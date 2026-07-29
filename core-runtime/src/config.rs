@@ -51,11 +51,21 @@ impl RuntimeConfig {
     /// defaults from `docs/architecture/FAILURE_MODEL.md`.
     pub fn validate(&self, production: bool) -> Result<(), Vec<ConfigError>> {
         let mut errs = Vec::new();
-        if self.max_ingest_queue == 0 { errs.push(ConfigError::ZeroIngestQueue); }
-        if self.max_relay_queue == 0  { errs.push(ConfigError::ZeroRelayQueue); }
-        if self.freshness_seconds == 0 { errs.push(ConfigError::ZeroFreshness); }
-        if self.runtime_id.is_empty() { errs.push(ConfigError::EmptyRuntimeId); }
-        if self.build_id.is_empty()   { errs.push(ConfigError::EmptyBuildId); }
+        if self.max_ingest_queue == 0 {
+            errs.push(ConfigError::ZeroIngestQueue);
+        }
+        if self.max_relay_queue == 0 {
+            errs.push(ConfigError::ZeroRelayQueue);
+        }
+        if self.freshness_seconds == 0 {
+            errs.push(ConfigError::ZeroFreshness);
+        }
+        if self.runtime_id.is_empty() {
+            errs.push(ConfigError::EmptyRuntimeId);
+        }
+        if self.build_id.is_empty() {
+            errs.push(ConfigError::EmptyBuildId);
+        }
         if production {
             if !self.scope_boundary_scan_outbound {
                 errs.push(ConfigError::OutboundScanDisabled);
@@ -64,7 +74,11 @@ impl RuntimeConfig {
                 errs.push(ConfigError::UnsignedSourcesAllowed);
             }
         }
-        if errs.is_empty() { Ok(()) } else { Err(errs) }
+        if errs.is_empty() {
+            Ok(())
+        } else {
+            Err(errs)
+        }
     }
 }
 
@@ -104,8 +118,12 @@ mod tests {
         c.scope_boundary_scan_outbound = false;
         c.allow_unsigned_sources = true;
         let e = c.validate(true).unwrap_err();
-        assert!(e.iter().any(|x| matches!(x, ConfigError::OutboundScanDisabled)));
-        assert!(e.iter().any(|x| matches!(x, ConfigError::UnsignedSourcesAllowed)));
+        assert!(e
+            .iter()
+            .any(|x| matches!(x, ConfigError::OutboundScanDisabled)));
+        assert!(e
+            .iter()
+            .any(|x| matches!(x, ConfigError::UnsignedSourcesAllowed)));
     }
 
     #[test]

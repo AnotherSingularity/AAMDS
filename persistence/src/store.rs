@@ -16,7 +16,11 @@ pub enum StoreError {
     #[error("json: {0}")]
     Json(#[from] serde_json::Error),
     #[error("integrity chain broken at sequence {sequence} (expected {expected}, got {found})")]
-    IntegrityBroken { sequence: u64, expected: String, found: String },
+    IntegrityBroken {
+        sequence: u64,
+        expected: String,
+        found: String,
+    },
     #[error("event_id already used")]
     DuplicateEvent,
 }
@@ -48,14 +52,18 @@ impl EventStore {
         let conn = Connection::open(path)?;
         conn.pragma_update(None, "journal_mode", "WAL")?;
         conn.pragma_update(None, "foreign_keys", "ON")?;
-        let this = Self { inner: Mutex::new(conn) };
+        let this = Self {
+            inner: Mutex::new(conn),
+        };
         this.run_migrations()?;
         Ok(this)
     }
 
     pub fn open_in_memory() -> Result<Self, StoreError> {
         let conn = Connection::open_in_memory()?;
-        let this = Self { inner: Mutex::new(conn) };
+        let this = Self {
+            inner: Mutex::new(conn),
+        };
         this.run_migrations()?;
         Ok(this)
     }
@@ -67,7 +75,11 @@ impl EventStore {
             tx.execute_batch(m.sql)?;
             tx.execute(
                 "INSERT OR IGNORE INTO schema_migrations(id,name,applied_at_unix_ns) VALUES(?,?,?)",
-                params![m.id, m.name, OffsetDateTime::now_utc().unix_timestamp_nanos() as i64],
+                params![
+                    m.id,
+                    m.name,
+                    OffsetDateTime::now_utc().unix_timestamp_nanos() as i64
+                ],
             )?;
         }
         tx.commit()?;
@@ -141,8 +153,15 @@ impl EventStore {
         )?;
 
         let digest = Self::compute_digest(
-            &prev_digest, event_type, event_id_hex, actor, runtime_id, target,
-            occurred_at.unix_timestamp_nanos(), &payload_json, security_context,
+            &prev_digest,
+            event_type,
+            event_id_hex,
+            actor,
+            runtime_id,
+            target,
+            occurred_at.unix_timestamp_nanos(),
+            &payload_json,
+            security_context,
         );
 
         tx.execute(
@@ -152,10 +171,20 @@ impl EventStore {
                 previous_digest_hex,integrity_digest_hex,correlation_id,security_context
              ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             params![
-                next_seq as i64, event_type, event_id_hex, actor, runtime_id, target,
-                before_ref, after_ref,
+                next_seq as i64,
+                event_type,
+                event_id_hex,
+                actor,
+                runtime_id,
+                target,
+                before_ref,
+                after_ref,
                 occurred_at.unix_timestamp_nanos() as i64,
-                payload_json, prev_digest, digest, correlation_id, security_context,
+                payload_json,
+                prev_digest,
+                digest,
+                correlation_id,
+                security_context,
             ],
         )?;
         tx.commit()?;
@@ -209,8 +238,14 @@ impl EventStore {
                 });
             }
             let recomputed = Self::compute_digest(
-                &previous_digest_hex, &event_type, &event_id_hex, &actor,
-                &runtime_id, &target, occurred_at_ns as i128, &payload_json,
+                &previous_digest_hex,
+                &event_type,
+                &event_id_hex,
+                &actor,
+                &runtime_id,
+                &target,
+                occurred_at_ns as i128,
+                &payload_json,
                 &security_context,
             );
             if recomputed != integrity_digest_hex {
@@ -240,7 +275,8 @@ impl EventStore {
             params![
                 observation_id_hex,
                 OffsetDateTime::now_utc().unix_timestamp_nanos() as i64,
-                reason, raw_json,
+                reason,
+                raw_json,
             ],
         )?;
         Ok(())
@@ -248,9 +284,9 @@ impl EventStore {
 
     pub fn tail_sequence(&self) -> Result<u64, StoreError> {
         let conn = self.inner.lock().unwrap();
-        let s: i64 = conn.query_row(
-            "SELECT COALESCE(MAX(sequence),0) FROM events", [], |r| r.get(0)
-        )?;
+        let s: i64 = conn.query_row("SELECT COALESCE(MAX(sequence),0) FROM events", [], |r| {
+            r.get(0)
+        })?;
         Ok(s as u64)
     }
 }
@@ -262,23 +298,31 @@ mod tests {
     use time::OffsetDateTime;
 
     fn ts(offset_ns: i64) -> OffsetDateTime {
-        OffsetDateTime::from_unix_timestamp_nanos(1_700_000_000_000_000_000_i128 + offset_ns as i128).unwrap()
+        OffsetDateTime::from_unix_timestamp_nanos(
+            1_700_000_000_000_000_000_i128 + offset_ns as i128,
+        )
+        .unwrap()
     }
 
     #[test]
     fn append_and_verify_chain() {
         let store = EventStore::open_in_memory().unwrap();
         for i in 0..5 {
-            store.append(
-                "TrackCreated",
-                &format!("evt-{i:016x}"),
-                "actor", "runtime-1",
-                &format!("trk-{i}"),
-                None, Some(&format!("state-{i}")),
-                ts(i),
-                &json!({"i": i}),
-                None, "sc0",
-            ).unwrap();
+            store
+                .append(
+                    "TrackCreated",
+                    &format!("evt-{i:016x}"),
+                    "actor",
+                    "runtime-1",
+                    &format!("trk-{i}"),
+                    None,
+                    Some(&format!("state-{i}")),
+                    ts(i),
+                    &json!({"i": i}),
+                    None,
+                    "sc0",
+                )
+                .unwrap();
         }
         store.verify_integrity().unwrap();
         assert_eq!(store.tail_sequence().unwrap(), 5);
@@ -287,34 +331,84 @@ mod tests {
     #[test]
     fn duplicate_event_rejected() {
         let store = EventStore::open_in_memory().unwrap();
-        store.append("X","evt-1","a","r","t",None,None, ts(0),
-            &json!({}), None, "sc").unwrap();
-        let err = store.append("X","evt-1","a","r","t",None,None, ts(1),
-            &json!({}), None, "sc").unwrap_err();
+        store
+            .append(
+                "X",
+                "evt-1",
+                "a",
+                "r",
+                "t",
+                None,
+                None,
+                ts(0),
+                &json!({}),
+                None,
+                "sc",
+            )
+            .unwrap();
+        let err = store
+            .append(
+                "X",
+                "evt-1",
+                "a",
+                "r",
+                "t",
+                None,
+                None,
+                ts(1),
+                &json!({}),
+                None,
+                "sc",
+            )
+            .unwrap_err();
         assert!(matches!(err, StoreError::DuplicateEvent));
     }
 
     #[test]
     fn rejected_observations_are_preserved() {
         let store = EventStore::open_in_memory().unwrap();
-        store.record_rejected_observation("obs-1", "invalid_frame", "{}").unwrap();
+        store
+            .record_rejected_observation("obs-1", "invalid_frame", "{}")
+            .unwrap();
         // idempotent replace
-        store.record_rejected_observation("obs-1", "invalid_frame_v2", "{}").unwrap();
+        store
+            .record_rejected_observation("obs-1", "invalid_frame_v2", "{}")
+            .unwrap();
     }
 
     #[test]
     fn tampering_breaks_integrity() {
         let store = EventStore::open_in_memory().unwrap();
         for i in 0..3 {
-            store.append("X", &format!("evt-{i}"), "a", "r", "t", None, None,
-                ts(i), &json!({"i": i}), None, "sc").unwrap();
+            store
+                .append(
+                    "X",
+                    &format!("evt-{i}"),
+                    "a",
+                    "r",
+                    "t",
+                    None,
+                    None,
+                    ts(i),
+                    &json!({"i": i}),
+                    None,
+                    "sc",
+                )
+                .unwrap();
         }
         // Tamper with the payload of event #2
         {
             let conn = store.inner.lock().unwrap();
-            conn.execute("UPDATE events SET payload_json='{\"i\":999}' WHERE sequence=2", []).unwrap();
+            conn.execute(
+                "UPDATE events SET payload_json='{\"i\":999}' WHERE sequence=2",
+                [],
+            )
+            .unwrap();
         }
         let err = store.verify_integrity().unwrap_err();
-        assert!(matches!(err, StoreError::IntegrityBroken { sequence: 2, .. }));
+        assert!(matches!(
+            err,
+            StoreError::IntegrityBroken { sequence: 2, .. }
+        ));
     }
 }

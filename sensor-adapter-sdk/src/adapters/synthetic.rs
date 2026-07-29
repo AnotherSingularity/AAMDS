@@ -72,13 +72,19 @@ impl SensorAdapter for SyntheticAdapter {
 
     fn validate_configuration(&self) -> Result<(), AdapterError> {
         if self.cfg.tick_seconds <= 0.0 {
-            return Err(AdapterError::InvalidConfiguration("tick_seconds must be > 0".into()));
+            return Err(AdapterError::InvalidConfiguration(
+                "tick_seconds must be > 0".into(),
+            ));
         }
         if self.cfg.max_observations == 0 {
-            return Err(AdapterError::InvalidConfiguration("max_observations must be > 0".into()));
+            return Err(AdapterError::InvalidConfiguration(
+                "max_observations must be > 0".into(),
+            ));
         }
         if self.cfg.sensor_id.is_empty() {
-            return Err(AdapterError::InvalidConfiguration("sensor_id must be non-empty".into()));
+            return Err(AdapterError::InvalidConfiguration(
+                "sensor_id must be non-empty".into(),
+            ));
         }
         Ok(())
     }
@@ -98,7 +104,8 @@ impl SensorAdapter for SyntheticAdapter {
         let dt = self.cfg.tick_seconds * self.tick as f64;
         let lat = self.cfg.start_lat_deg + self.cfg.v_north_ms * dt / 111_320.0;
         let lon = self.cfg.start_lon_deg
-            + self.cfg.v_east_ms * dt / (111_320.0 * self.cfg.start_lat_deg.to_radians().cos().abs().max(1e-6));
+            + self.cfg.v_east_ms * dt
+                / (111_320.0 * self.cfg.start_lat_deg.to_radians().cos().abs().max(1e-6));
         let alt = self.cfg.start_alt_m + self.cfg.v_up_ms * dt;
         let ts = self.cfg.start_time + time::Duration::seconds_f64(dt);
 
@@ -125,7 +132,11 @@ impl SensorAdapter for SyntheticAdapter {
             receive_timestamp: ts,
             sequence_number: seq,
             coordinate_reference: CoordinateReference::Wgs84Geodetic,
-            measurement: RawMeasurement::Position { x: lon, y: lat, z: alt },
+            measurement: RawMeasurement::Position {
+                x: lon,
+                y: lat,
+                z: alt,
+            },
             measurement_uncertainty: Known::Known {
                 value: aeon_contracts::uncertainty::PositionUncertainty {
                     sigma_east_m: 5.0,

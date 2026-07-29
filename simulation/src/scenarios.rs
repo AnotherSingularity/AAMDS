@@ -55,7 +55,11 @@ pub fn single_clean_track() -> Scenario {
         tick_seconds: 1.0,
         start_time: OffsetDateTime::UNIX_EPOCH,
     });
-    Scenario { manifest, adapter, policy }
+    Scenario {
+        manifest,
+        adapter,
+        policy,
+    }
 }
 
 pub fn crossing_two_tracks() -> Scenario {

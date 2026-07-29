@@ -11,8 +11,8 @@
 
 #![forbid(unsafe_code)]
 
-pub mod scenarios;
-pub mod pipeline;
 pub mod determinism;
+pub mod pipeline;
+pub mod scenarios;
 
 pub use pipeline::{run_pipeline, PipelineOutcome};

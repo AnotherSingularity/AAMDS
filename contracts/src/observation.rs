@@ -9,7 +9,7 @@ use crate::provenance::{Integrity, Provenance, TransformationStep};
 use crate::time_kind::TimeQuality;
 use crate::uncertainty::{Confidence, PositionUncertainty, VelocityUncertainty};
 use crate::unknown::Known;
-use crate::version::{SchemaVersion, normalized_schema, observation_schema};
+use crate::version::{normalized_schema, observation_schema, SchemaVersion};
 
 /// A single raw sensor measurement, as reported by an adapter before
 /// canonicalisation.
@@ -37,7 +37,9 @@ pub struct RawObservation {
 }
 
 impl RawObservation {
-    pub fn schema() -> SchemaVersion { observation_schema() }
+    pub fn schema() -> SchemaVersion {
+        observation_schema()
+    }
 }
 
 /// The measurement payload as reported. Kept in native units so the
@@ -57,7 +59,9 @@ pub enum RawMeasurement {
     },
     /// A track-declared position with vendor semantics — the normalization
     /// layer must interpret it via the adapter capability declaration.
-    VendorNative { payload_json: String },
+    VendorNative {
+        payload_json: String,
+    },
 }
 
 /// Sensor-supplied quality hints. Adapters populate what they know; missing
@@ -90,5 +94,7 @@ pub struct NormalizedObservation {
 }
 
 impl NormalizedObservation {
-    pub fn schema() -> SchemaVersion { normalized_schema() }
+    pub fn schema() -> SchemaVersion {
+        normalized_schema()
+    }
 }

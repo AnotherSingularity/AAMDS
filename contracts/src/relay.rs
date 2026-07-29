@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 
 use crate::ids::{ActorId, DestinationId, RelayMessageId};
-use crate::version::{SchemaVersion, relay_schema};
+use crate::version::{relay_schema, SchemaVersion};
 
 /// The complete permitted outbound-message surface.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -83,5 +83,7 @@ pub struct RelayEnvelope {
 }
 
 impl RelayEnvelope {
-    pub fn schema() -> SchemaVersion { relay_schema() }
+    pub fn schema() -> SchemaVersion {
+        relay_schema()
+    }
 }

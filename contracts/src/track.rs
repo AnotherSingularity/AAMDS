@@ -8,7 +8,7 @@ use crate::ids::{ObservationId, SensorId, SourceSystemId, TrackId};
 use crate::provenance::{Integrity, Provenance};
 use crate::uncertainty::{Confidence, PositionUncertainty, VelocityUncertainty};
 use crate::unknown::Known;
-use crate::version::{SchemaVersion, track_schema, track_update_schema};
+use crate::version::{track_schema, track_update_schema, SchemaVersion};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -88,7 +88,9 @@ pub struct Track {
 }
 
 impl Track {
-    pub fn schema() -> SchemaVersion { track_schema() }
+    pub fn schema() -> SchemaVersion {
+        track_schema()
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -121,5 +123,7 @@ pub struct TrackUpdate {
 }
 
 impl TrackUpdate {
-    pub fn schema() -> SchemaVersion { track_update_schema() }
+    pub fn schema() -> SchemaVersion {
+        track_update_schema()
+    }
 }

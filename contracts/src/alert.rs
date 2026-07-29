@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 
 use crate::ids::AlertId;
-use crate::version::{SchemaVersion, alert_schema};
+use crate::version::{alert_schema, SchemaVersion};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -79,5 +79,7 @@ pub struct Alert {
 }
 
 impl Alert {
-    pub fn schema() -> SchemaVersion { alert_schema() }
+    pub fn schema() -> SchemaVersion {
+        alert_schema()
+    }
 }

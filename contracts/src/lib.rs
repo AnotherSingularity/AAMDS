@@ -9,19 +9,19 @@
 #![forbid(unsafe_code)]
 #![deny(missing_debug_implementations)]
 
-pub mod prohibited;
-pub mod unknown;
-pub mod provenance;
-pub mod ids;
-pub mod time_kind;
-pub mod coords;
-pub mod uncertainty;
-pub mod observation;
-pub mod track;
-pub mod health;
 pub mod alert;
-pub mod relay;
 pub mod audit;
+pub mod coords;
+pub mod health;
+pub mod ids;
+pub mod observation;
+pub mod prohibited;
+pub mod provenance;
+pub mod relay;
+pub mod time_kind;
+pub mod track;
+pub mod uncertainty;
+pub mod unknown;
 pub mod version;
 
 pub use ids::*;

@@ -24,7 +24,9 @@ pub const COORD_TRANSFORM_VERSION: &str = "aeon-coords/1.0";
 pub enum NormalizationError {
     #[error("unknown coordinate frame")]
     UnknownCoordinateFrame,
-    #[error("vendor-native payload requires a coordinate-transform capability that was not declared")]
+    #[error(
+        "vendor-native payload requires a coordinate-transform capability that was not declared"
+    )]
     UnsupportedVendorPayload,
     #[error("latitude out of range: {0}")]
     LatOutOfRange(f64),
@@ -51,28 +53,46 @@ pub enum NormalizationError {
 ///   canonical position.
 /// * Original values are preserved on the returned `NormalizedObservation`
 ///   and on the transformation chain.
-pub fn normalize(raw: &RawObservation, mut provenance: Provenance)
-    -> Result<NormalizedObservation, NormalizationError>
-{
+pub fn normalize(
+    raw: &RawObservation,
+    mut provenance: Provenance,
+) -> Result<NormalizedObservation, NormalizationError> {
     let mut chain = Vec::<TransformationStep>::new();
     let mut validation_notes = Vec::<String>::new();
     let now = OffsetDateTime::now_utc();
 
     // ------- Coordinate normalisation -------
     let (position, coordinate_quality) = match (raw.coordinate_reference, &raw.measurement) {
-        (CoordinateReference::Wgs84Geodetic, RawMeasurement::Position { x: lon, y: lat, z: alt }) => {
-            let lat = *lat; let lon = *lon; let alt = *alt;
-            if !(-90.0..=90.0).contains(&lat) { return Err(NormalizationError::LatOutOfRange(lat)); }
-            if !(-180.0..=180.0).contains(&lon) { return Err(NormalizationError::LonOutOfRange(lon)); }
+        (
+            CoordinateReference::Wgs84Geodetic,
+            RawMeasurement::Position {
+                x: lon,
+                y: lat,
+                z: alt,
+            },
+        ) => {
+            let lat = *lat;
+            let lon = *lon;
+            let alt = *alt;
+            if !(-90.0..=90.0).contains(&lat) {
+                return Err(NormalizationError::LatOutOfRange(lat));
+            }
+            if !(-180.0..=180.0).contains(&lon) {
+                return Err(NormalizationError::LonOutOfRange(lon));
+            }
             chain.push(TransformationStep {
                 operation: "identity_wgs84_geodetic".into(),
                 version: COORD_TRANSFORM_VERSION.into(),
                 applied_at: now,
             });
             (
-                Known::Known { value: CanonicalPosition {
-                    latitude_deg: lat, longitude_deg: lon, altitude_m: alt,
-                }},
+                Known::Known {
+                    value: CanonicalPosition {
+                        latitude_deg: lat,
+                        longitude_deg: lon,
+                        altitude_m: alt,
+                    },
+                },
                 CoordinateQuality::Good,
             )
         }
@@ -83,11 +103,16 @@ pub fn normalize(raw: &RawObservation, mut provenance: Provenance)
                 applied_at: now,
             });
             validation_notes.push("ECEF conversion not implemented at this baseline".into());
-            (Known::Unavailable { reason: "ecef_conversion_unimplemented".into() },
-             CoordinateQuality::Degraded)
+            (
+                Known::Unavailable {
+                    reason: "ecef_conversion_unimplemented".into(),
+                },
+                CoordinateQuality::Degraded,
+            )
         }
         (CoordinateReference::RangeBearingElevation, _) => {
-            validation_notes.push("range-bearing-elevation requires sensor-local origin metadata".into());
+            validation_notes
+                .push("range-bearing-elevation requires sensor-local origin metadata".into());
             (Known::Unknown, CoordinateQuality::OutOfDeclaredDomain)
         }
         (CoordinateReference::Enu { .. }, _) => {
@@ -101,7 +126,9 @@ pub fn normalize(raw: &RawObservation, mut provenance: Provenance)
             return Err(NormalizationError::UnsupportedVendorPayload);
         }
         (_, RawMeasurement::RangeBearingElevation { .. }) => {
-            validation_notes.push("RBE measurement without RBE frame — treated as out of declared domain".into());
+            validation_notes.push(
+                "RBE measurement without RBE frame — treated as out of declared domain".into(),
+            );
             (Known::Unknown, CoordinateQuality::OutOfDeclaredDomain)
         }
     };
@@ -122,15 +149,15 @@ pub fn normalize(raw: &RawObservation, mut provenance: Provenance)
 
     // ------- Integrity propagation -------
     provenance.integrity = match raw.integrity.clone() {
-        Integrity::Verified                       => Integrity::Verified,
-        Integrity::Unsigned                       => Integrity::Unsigned,
-        Integrity::SignatureInvalid { reason }    => Integrity::Derived {
+        Integrity::Verified => Integrity::Verified,
+        Integrity::Unsigned => Integrity::Unsigned,
+        Integrity::SignatureInvalid { reason } => Integrity::Derived {
             min_upstream: Box::new(Integrity::SignatureInvalid { reason }),
         },
-        Integrity::SourceUnknown                  => Integrity::Derived {
+        Integrity::SourceUnknown => Integrity::Derived {
             min_upstream: Box::new(Integrity::SourceUnknown),
         },
-        Integrity::Derived { min_upstream }       => Integrity::Derived { min_upstream },
+        Integrity::Derived { min_upstream } => Integrity::Derived { min_upstream },
     };
 
     chain.push(TransformationStep {
@@ -179,10 +206,16 @@ mod tests {
             receive_timestamp: OffsetDateTime::UNIX_EPOCH,
             sequence_number: 1,
             coordinate_reference: CoordinateReference::Wgs84Geodetic,
-            measurement: RawMeasurement::Position { x: lon, y: lat, z: 0.0 },
+            measurement: RawMeasurement::Position {
+                x: lon,
+                y: lat,
+                z: 0.0,
+            },
             measurement_uncertainty: Known::Known {
                 value: PositionUncertainty {
-                    sigma_east_m: 1.0, sigma_north_m: 1.0, sigma_up_m: 1.0,
+                    sigma_east_m: 1.0,
+                    sigma_north_m: 1.0,
+                    sigma_up_m: 1.0,
                 },
             },
             velocity_uncertainty: Known::Unknown,
@@ -236,16 +269,26 @@ mod tests {
     #[test]
     fn latitude_out_of_range_is_rejected() {
         let r = raw_pos(100.0, 0.0);
-        assert!(matches!(normalize(&r, prov()), Err(NormalizationError::LatOutOfRange(_))));
+        assert!(matches!(
+            normalize(&r, prov()),
+            Err(NormalizationError::LatOutOfRange(_))
+        ));
     }
 
     #[test]
     fn negative_sigma_is_rejected() {
         let mut r = raw_pos(0.0, 0.0);
         r.measurement_uncertainty = Known::Known {
-            value: PositionUncertainty { sigma_east_m: -1.0, sigma_north_m: 1.0, sigma_up_m: 1.0 },
+            value: PositionUncertainty {
+                sigma_east_m: -1.0,
+                sigma_north_m: 1.0,
+                sigma_up_m: 1.0,
+            },
         };
-        assert!(matches!(normalize(&r, prov()), Err(NormalizationError::NegativeSigma)));
+        assert!(matches!(
+            normalize(&r, prov()),
+            Err(NormalizationError::NegativeSigma)
+        ));
     }
 
     #[test]
@@ -261,13 +304,18 @@ mod tests {
     fn unknown_frame_is_rejected() {
         let mut r = raw_pos(0.0, 0.0);
         r.coordinate_reference = CoordinateReference::Unknown;
-        assert!(matches!(normalize(&r, prov()), Err(NormalizationError::UnknownCoordinateFrame)));
+        assert!(matches!(
+            normalize(&r, prov()),
+            Err(NormalizationError::UnknownCoordinateFrame)
+        ));
     }
 
     #[test]
     fn integrity_derives_downstream() {
         let mut r = raw_pos(0.0, 0.0);
-        r.integrity = Integrity::SignatureInvalid { reason: "bad".into() };
+        r.integrity = Integrity::SignatureInvalid {
+            reason: "bad".into(),
+        };
         let n = normalize(&r, prov()).unwrap();
         match n.provenance.integrity {
             Integrity::Derived { min_upstream } => {

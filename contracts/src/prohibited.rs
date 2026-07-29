@@ -113,7 +113,11 @@ pub fn scan_json(value: &serde_json::Value) -> Option<ScopeRejection> {
                             field_hint: format!("{path}.{k}"),
                         });
                     }
-                    let p = if path.is_empty() { k.clone() } else { format!("{path}.{k}") };
+                    let p = if path.is_empty() {
+                        k.clone()
+                    } else {
+                        format!("{path}.{k}")
+                    };
                     if let Some(r) = walk(x, &p) {
                         return Some(r);
                     }

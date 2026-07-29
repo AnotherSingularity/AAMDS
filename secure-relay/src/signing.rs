@@ -19,14 +19,22 @@ pub fn sign(private_key_material: &[u8], canonical_digest_hex: &str) -> String {
     hex::encode(h.finalize())
 }
 
-pub fn verify(private_key_material: &[u8], canonical_digest_hex: &str, signature_hex: &str) -> bool {
+pub fn verify(
+    private_key_material: &[u8],
+    canonical_digest_hex: &str,
+    signature_hex: &str,
+) -> bool {
     let expected = sign(private_key_material, canonical_digest_hex);
     // Constant-time comparison at the byte level.
     if expected.len() != signature_hex.len() {
         return false;
     }
     let mut diff: u8 = 0;
-    for (a, b) in expected.as_bytes().iter().zip(signature_hex.as_bytes().iter()) {
+    for (a, b) in expected
+        .as_bytes()
+        .iter()
+        .zip(signature_hex.as_bytes().iter())
+    {
         diff |= a ^ b;
     }
     diff == 0
@@ -65,7 +73,10 @@ pub struct AntiReplayCache {
 
 impl AntiReplayCache {
     pub fn new(ttl_seconds: u32) -> Self {
-        Self { ttl_seconds: ttl_seconds as i64, seen: VecDeque::new() }
+        Self {
+            ttl_seconds: ttl_seconds as i64,
+            seen: VecDeque::new(),
+        }
     }
 
     fn evict(&mut self, now: OffsetDateTime) {

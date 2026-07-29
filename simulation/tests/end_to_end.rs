@@ -12,11 +12,18 @@ fn end_to_end_single_clean_track_produces_a_stable_active_track() {
     let out = run_pipeline("e2e", &mut s.adapter, s.policy, || far).unwrap();
     assert!(out.updates.len() >= 5);
     let last = out.updates.last().unwrap();
-    assert!(matches!(last.new_state.status,
-        aeon_contracts::track::TrackStatus::Active
-      | aeon_contracts::track::TrackStatus::Tentative));
+    assert!(matches!(
+        last.new_state.status,
+        aeon_contracts::track::TrackStatus::Active | aeon_contracts::track::TrackStatus::Tentative
+    ));
     // Provenance root carries the source-observation identifier
-    assert!(!last.new_state.provenance_root.source_observations.is_empty()
-         || !last.contributing_observations.is_empty());
+    assert!(
+        !last
+            .new_state
+            .provenance_root
+            .source_observations
+            .is_empty()
+            || !last.contributing_observations.is_empty()
+    );
     assert_eq!(out.rejected_count, 0);
 }

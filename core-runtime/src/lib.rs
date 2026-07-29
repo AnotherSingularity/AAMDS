@@ -11,7 +11,7 @@
 #![forbid(unsafe_code)]
 
 pub mod config;
-pub mod lifecycle;
 pub mod health;
+pub mod lifecycle;
 
 pub use lifecycle::{RuntimeError, RuntimeSupervisor};

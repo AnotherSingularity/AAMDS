@@ -11,9 +11,9 @@ pub mod adapter;
 pub mod capability;
 pub mod conformance;
 pub mod adapters {
-    pub mod synthetic;
-    pub mod replay;
     pub mod file;
+    pub mod replay;
+    pub mod synthetic;
 }
 
 pub use adapter::{AdapterDiagnostic, AdapterError, SensorAdapter};

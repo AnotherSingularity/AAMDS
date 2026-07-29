@@ -1,8 +1,8 @@
 //! Health snapshot builder.
 
 use aeon_contracts::health::{
-    AdapterHealth, RelayHealth, RuntimeState, SensorFeedHealth, StorageHealth,
-    SystemHealth, TimeSourceHealth,
+    AdapterHealth, RelayHealth, RuntimeState, SensorFeedHealth, StorageHealth, SystemHealth,
+    TimeSourceHealth,
 };
 use aeon_contracts::version::health_schema;
 use time::OffsetDateTime;
@@ -51,11 +51,8 @@ mod tests {
 
     #[test]
     fn health_builder_defaults_are_conservative() {
-        let h = HealthBuilder::default().build(
-            RuntimeState::Ready,
-            "cfg-0".into(),
-            "build-0".into(),
-        );
+        let h =
+            HealthBuilder::default().build(RuntimeState::Ready, "cfg-0".into(), "build-0".into());
         assert_eq!(h.runtime_state, RuntimeState::Ready);
         assert_eq!(h.storage, StorageHealth::Healthy);
         assert_eq!(h.time_source, TimeSourceHealth::LocalOnly);

@@ -29,7 +29,9 @@ pub fn trace_digest(outcome: &PipelineOutcome) -> String {
         // position, quantised to ~1 cm — floats survive same-run repro
         // without a scale flag on the machine so this quantisation is
         // conservative.
-        if let aeon_contracts::unknown::Known::Known { value: p } = &u.new_state.kinematic_state.position {
+        if let aeon_contracts::unknown::Known::Known { value: p } =
+            &u.new_state.kinematic_state.position
+        {
             h.update(((p.latitude_deg * 1e7).round() as i64).to_be_bytes());
             h.update(((p.longitude_deg * 1e7).round() as i64).to_be_bytes());
             h.update(((p.altitude_m * 1e3).round() as i64).to_be_bytes());

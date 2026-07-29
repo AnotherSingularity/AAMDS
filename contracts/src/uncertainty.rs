@@ -35,13 +35,9 @@ pub struct VelocityUncertainty {
 
 impl VelocityUncertainty {
     pub fn is_valid(&self) -> bool {
-        [
-            self.sigma_east_ms,
-            self.sigma_north_ms,
-            self.sigma_up_ms,
-        ]
-        .iter()
-        .all(|v| v.is_finite() && *v >= 0.0)
+        [self.sigma_east_ms, self.sigma_north_ms, self.sigma_up_ms]
+            .iter()
+            .all(|v| v.is_finite() && *v >= 0.0)
     }
 }
 
@@ -58,5 +54,7 @@ impl Confidence {
             None
         }
     }
-    pub fn get(&self) -> f64 { self.0 }
+    pub fn get(&self) -> f64 {
+        self.0
+    }
 }

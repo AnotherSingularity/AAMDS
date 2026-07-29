@@ -21,7 +21,10 @@ use crate::config::{ConfigError, RuntimeConfig};
 #[derive(Debug, thiserror::Error)]
 pub enum RuntimeError {
     #[error("illegal transition from {from:?} to {to:?}")]
-    IllegalTransition { from: RuntimeState, to: RuntimeState },
+    IllegalTransition {
+        from: RuntimeState,
+        to: RuntimeState,
+    },
     #[error("configuration invalid: {0:?}")]
     InvalidConfiguration(Vec<ConfigError>),
     #[error("cannot promote to Ready without a validated configuration")]
@@ -44,7 +47,9 @@ impl RuntimeSupervisor {
         }
     }
 
-    pub fn state(&self) -> RuntimeState { self.state }
+    pub fn state(&self) -> RuntimeState {
+        self.state
+    }
 
     /// Attempt a state transition. Every transition is checked; any illegal
     /// transition returns an error and leaves the supervisor unchanged.
@@ -53,26 +58,29 @@ impl RuntimeSupervisor {
         let ok = matches!(
             (self.state, to),
             (Uninitialized, ValidatingConfiguration)
-            | (ValidatingConfiguration, Starting)
-            | (ValidatingConfiguration, Failed)
-            | (Starting, Ready)
-            | (Starting, Failed)
-            | (Ready, Degraded)
-            | (Ready, Paused)
-            | (Ready, ShuttingDown)
-            | (Ready, Failed)
-            | (Degraded, Ready)
-            | (Degraded, Paused)
-            | (Degraded, ShuttingDown)
-            | (Degraded, Failed)
-            | (Paused, Ready)
-            | (Paused, ShuttingDown)
-            | (Paused, Failed)
-            | (ShuttingDown, Uninitialized)
-            | (Failed, Uninitialized)
+                | (ValidatingConfiguration, Starting)
+                | (ValidatingConfiguration, Failed)
+                | (Starting, Ready)
+                | (Starting, Failed)
+                | (Ready, Degraded)
+                | (Ready, Paused)
+                | (Ready, ShuttingDown)
+                | (Ready, Failed)
+                | (Degraded, Ready)
+                | (Degraded, Paused)
+                | (Degraded, ShuttingDown)
+                | (Degraded, Failed)
+                | (Paused, Ready)
+                | (Paused, ShuttingDown)
+                | (Paused, Failed)
+                | (ShuttingDown, Uninitialized)
+                | (Failed, Uninitialized)
         );
         if !ok {
-            return Err(RuntimeError::IllegalTransition { from: self.state, to });
+            return Err(RuntimeError::IllegalTransition {
+                from: self.state,
+                to,
+            });
         }
         // Promotion to Ready requires a validated configuration.
         if to == Ready && self.validated_digest.is_none() {

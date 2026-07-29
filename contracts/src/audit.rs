@@ -5,7 +5,7 @@ use sha2::{Digest, Sha256};
 use time::OffsetDateTime;
 
 use crate::ids::{ActorId, AuditEventId};
-use crate::version::{SchemaVersion, audit_schema};
+use crate::version::{audit_schema, SchemaVersion};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -56,7 +56,9 @@ pub struct AuditEvent {
 }
 
 impl AuditEvent {
-    pub fn schema() -> SchemaVersion { audit_schema() }
+    pub fn schema() -> SchemaVersion {
+        audit_schema()
+    }
 
     /// Compute the canonical integrity digest for this event, chaining the
     /// digest of the previous event so tampering is detectable.
@@ -72,7 +74,11 @@ impl AuditEvent {
         let mut h = Sha256::new();
         h.update(actor.as_str().as_bytes());
         h.update(runtime_id.as_bytes());
-        h.update(serde_json::to_string(&event_type).unwrap_or_default().as_bytes());
+        h.update(
+            serde_json::to_string(&event_type)
+                .unwrap_or_default()
+                .as_bytes(),
+        );
         h.update(target.as_bytes());
         h.update(sequence.to_be_bytes());
         h.update(occurred_at_unix_nanos.to_be_bytes());

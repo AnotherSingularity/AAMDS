@@ -38,9 +38,14 @@ async fn version(State(s): State<ApiState>) -> Json<VersionInfo> {
         build_id: s.build_id.clone(),
         configuration_version: s.configuration_version.clone(),
         contracts: vec![
-            "observation:1.0", "normalized:1.0", "track:1.0",
-            "track_update:1.0", "health:1.0", "alert:1.0",
-            "relay_envelope:1.0", "audit:1.0",
+            "observation:1.0",
+            "normalized:1.0",
+            "track:1.0",
+            "track_update:1.0",
+            "health:1.0",
+            "alert:1.0",
+            "relay_envelope:1.0",
+            "audit:1.0",
         ],
     })
 }
@@ -57,7 +62,7 @@ async fn get_track(
     let id = aeon_contracts::ids::TrackId(uuid);
     match s.engine.lock().unwrap().track(&id) {
         Some(t) => Ok(Json(t.clone())),
-        None    => Err((StatusCode::NOT_FOUND, "not found".into())),
+        None => Err((StatusCode::NOT_FOUND, "not found".into())),
     }
 }
 
@@ -81,7 +86,10 @@ async fn ack_alert(
 ) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
     let uuid = Uuid::parse_str(&id_str).map_err(|e| (StatusCode::BAD_REQUEST, e.to_string()))?;
     let mut alerts = s.alerts.lock().unwrap();
-    let a = alerts.iter_mut().find(|a| a.alert_id.0 == uuid).ok_or((StatusCode::NOT_FOUND, "no such alert".into()))?;
+    let a = alerts
+        .iter_mut()
+        .find(|a| a.alert_id.0 == uuid)
+        .ok_or((StatusCode::NOT_FOUND, "no such alert".into()))?;
     a.acknowledgment = aeon_contracts::alert::AlertAcknowledgment::Acknowledged;
     Ok(Json(serde_json::json!({"ok": true, "actor": body.actor})))
 }

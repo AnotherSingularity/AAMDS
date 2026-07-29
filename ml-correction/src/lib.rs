@@ -60,18 +60,23 @@ pub struct ModelArtifact {
     pub id: ModelVersionId,
     pub name: String,
     pub version: String,
-    pub feature_schema: String,        // opaque; matched by digest
-    pub output_schema: String,         // opaque; matched by digest
+    pub feature_schema: String, // opaque; matched by digest
+    pub output_schema: String,  // opaque; matched by digest
     pub artifact_digest_hex: String,
     pub signature_hex: String,
-    pub calibration_cap: f64,          // upper bound on confidence contribution
+    pub calibration_cap: f64, // upper bound on confidence contribution
     pub max_correction_magnitude: f64, // per-model bound on |correction|
     pub known_limitations: Vec<String>,
     pub state: ModelState,
 }
 
 impl ModelArtifact {
-    pub fn compute_artifact_digest(name: &str, version: &str, feature_schema: &str, output_schema: &str) -> String {
+    pub fn compute_artifact_digest(
+        name: &str,
+        version: &str,
+        feature_schema: &str,
+        output_schema: &str,
+    ) -> String {
         let mut h = Sha256::new();
         h.update(name.as_bytes());
         h.update(version.as_bytes());
@@ -87,7 +92,7 @@ impl ModelArtifact {
 pub enum CorrectionStatus {
     Applied,
     Shadow,
-    Untrusted,          // OOD input; recorded but not applied
+    Untrusted, // OOD input; recorded but not applied
     Rejected,
 }
 
@@ -132,12 +137,19 @@ impl ModelRegistry {
         self.models.get(id)
     }
 
-    pub fn transition_state(&mut self, id: ModelVersionId, to: ModelState) -> Result<(), ModelError> {
-        let m = self.models.get_mut(&id).ok_or_else(|| ModelError::Unknown(id.to_string()))?;
+    pub fn transition_state(
+        &mut self,
+        id: ModelVersionId,
+        to: ModelState,
+    ) -> Result<(), ModelError> {
+        let m = self
+            .models
+            .get_mut(&id)
+            .ok_or_else(|| ModelError::Unknown(id.to_string()))?;
         use ModelState::*;
         let allowed = matches!(
             (m.state, to),
-              (Draft, Validating)
+            (Draft, Validating)
             | (Validating, Shadow) | (Validating, Approved)
             | (Shadow, Approved)   | (Shadow, Revoked)
             | (Approved, Active)   | (Approved, Deprecated) | (Approved, Revoked)
@@ -148,7 +160,10 @@ impl ModelRegistry {
             | (Deprecated, Approved)
         );
         if !allowed {
-            return Err(ModelError::Policy(format!("illegal state transition {:?} -> {:?}", m.state, to)));
+            return Err(ModelError::Policy(format!(
+                "illegal state transition {:?} -> {:?}",
+                m.state, to
+            )));
         }
         m.state = to;
         if to == Active {
@@ -168,9 +183,14 @@ impl ModelRegistry {
     }
 
     pub fn set_shadow(&mut self, id: ModelVersionId) -> Result<(), ModelError> {
-        let m = self.models.get(&id).ok_or_else(|| ModelError::Unknown(id.to_string()))?;
+        let m = self
+            .models
+            .get(&id)
+            .ok_or_else(|| ModelError::Unknown(id.to_string()))?;
         if m.state != ModelState::Shadow {
-            return Err(ModelError::Policy(format!("model {id} is not in Shadow state")));
+            return Err(ModelError::Policy(format!(
+                "model {id} is not in Shadow state"
+            )));
         }
         self.shadow = Some(id);
         Ok(())
@@ -193,7 +213,10 @@ pub struct CorrectionRuntime<'r> {
 
 impl<'r> CorrectionRuntime<'r> {
     pub fn new(registry: &'r ModelRegistry) -> Self {
-        Self { registry, ood_reject: true }
+        Self {
+            registry,
+            ood_reject: true,
+        }
     }
 
     /// Apply the model whose id is `model_id` if it is Active; otherwise
@@ -212,7 +235,10 @@ impl<'r> CorrectionRuntime<'r> {
         is_out_of_distribution: bool,
         reason: &str,
     ) -> Result<Correction, ModelError> {
-        let m = self.registry.get(&model_id).ok_or_else(|| ModelError::Unknown(model_id.to_string()))?;
+        let m = self
+            .registry
+            .get(&model_id)
+            .ok_or_else(|| ModelError::Unknown(model_id.to_string()))?;
         if m.state != ModelState::Active {
             return Err(ModelError::NotActive(m.state));
         }
@@ -238,7 +264,11 @@ impl<'r> CorrectionRuntime<'r> {
 
         // OOD
         if is_out_of_distribution {
-            correction.status = if self.ood_reject { CorrectionStatus::Rejected } else { CorrectionStatus::Untrusted };
+            correction.status = if self.ood_reject {
+                CorrectionStatus::Rejected
+            } else {
+                CorrectionStatus::Untrusted
+            };
             correction.applied_confidence = 0.0;
         }
 
@@ -255,10 +285,17 @@ impl<'r> CorrectionRuntime<'r> {
         raw_delta: f64,
         raw_confidence: f64,
     ) -> Result<Option<ShadowComparison>, ModelError> {
-        let Some(champion) = self.registry.active_model() else { return Ok(None); };
-        let challenger = self.registry.get(&challenger_id).ok_or_else(|| ModelError::Unknown(challenger_id.to_string()))?;
+        let Some(champion) = self.registry.active_model() else {
+            return Ok(None);
+        };
+        let challenger = self
+            .registry
+            .get(&challenger_id)
+            .ok_or_else(|| ModelError::Unknown(challenger_id.to_string()))?;
         if challenger.state != ModelState::Shadow {
-            return Err(ModelError::Policy("challenger is not in Shadow state".into()));
+            return Err(ModelError::Policy(
+                "challenger is not in Shadow state".into(),
+            ));
         }
         let champ_corr = Correction {
             model_id: champion.id,
@@ -283,7 +320,11 @@ impl<'r> CorrectionRuntime<'r> {
             reason: "challenger".into(),
         };
         let delta_absolute = (champ_corr.delta - chal_corr.delta).abs();
-        Ok(Some(ShadowComparison { champion: champ_corr, challenger: chal_corr, delta_absolute }))
+        Ok(Some(ShadowComparison {
+            champion: champ_corr,
+            challenger: chal_corr,
+            delta_absolute,
+        }))
     }
 }
 
@@ -317,13 +358,17 @@ mod tests {
         reg.register(m);
         // Not active yet
         let rt = CorrectionRuntime::new(&reg);
-        let err = rt.apply(id, "sensor:s1/bias", 1.0, 0.9, false, "x").unwrap_err();
+        let err = rt
+            .apply(id, "sensor:s1/bias", 1.0, 0.9, false, "x")
+            .unwrap_err();
         assert!(matches!(err, ModelError::NotActive(ModelState::Approved)));
         // Activate
         drop(rt);
         reg.transition_state(id, ModelState::Active).unwrap();
         let rt = CorrectionRuntime::new(&reg);
-        let c = rt.apply(id, "sensor:s1/bias", 1.0, 0.9, false, "x").unwrap();
+        let c = rt
+            .apply(id, "sensor:s1/bias", 1.0, 0.9, false, "x")
+            .unwrap();
         assert_eq!(c.status, CorrectionStatus::Applied);
         // calibration cap applied to confidence
         assert!(c.applied_confidence <= 0.8);
@@ -384,7 +429,10 @@ mod tests {
         reg.transition_state(aid, ModelState::Active).unwrap();
         reg.transition_state(bid, ModelState::Shadow).unwrap();
         let rt = CorrectionRuntime::new(&reg);
-        let cmp = rt.shadow_evaluate(bid, "sensor:s1/bias", 2.0, 0.9).unwrap().unwrap();
+        let cmp = rt
+            .shadow_evaluate(bid, "sensor:s1/bias", 2.0, 0.9)
+            .unwrap()
+            .unwrap();
         assert_eq!(cmp.champion.status, CorrectionStatus::Applied);
         assert_eq!(cmp.challenger.status, CorrectionStatus::Shadow);
         assert_eq!(cmp.challenger.applied_confidence, 0.0);

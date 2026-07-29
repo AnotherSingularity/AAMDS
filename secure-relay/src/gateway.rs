@@ -87,9 +87,11 @@ impl RelayGateway {
     /// Attempt to accept an envelope for outbound relay. Returns
     /// `Ok(new_delivery_state)` on acceptance (queued or delivered),
     /// or the specific reason for rejection.
-    pub fn submit(&mut self, mut envelope: RelayEnvelope, now: OffsetDateTime)
-        -> Result<DeliveryState, RelayRejectReason>
-    {
+    pub fn submit(
+        &mut self,
+        mut envelope: RelayEnvelope,
+        now: OffsetDateTime,
+    ) -> Result<DeliveryState, RelayRejectReason> {
         // (1) allowlist
         if !is_allowed(envelope.kind) {
             return self.reject(envelope, RelayRejectReason::ProhibitedKind);
@@ -104,44 +106,69 @@ impl RelayGateway {
             None => return self.reject(envelope, RelayRejectReason::UnknownDestination),
         };
         // (3b) destination authorized for kind?
-        if !dest_policy.allowed_kinds.iter().any(|k| *k == envelope.kind) {
+        if !dest_policy
+            .allowed_kinds
+            .iter()
+            .any(|k| *k == envelope.kind)
+        {
             return self.reject(envelope, RelayRejectReason::KindNotAuthorizedForDestination);
         }
         // (4a) classification present + permitted
         if envelope.classification.label.is_empty() {
             return self.reject(envelope, RelayRejectReason::MissingClassification);
         }
-        if !dest_policy.allowed_classification_labels.iter().any(|l| l == &envelope.classification.label) {
+        if !dest_policy
+            .allowed_classification_labels
+            .iter()
+            .any(|l| l == &envelope.classification.label)
+        {
             return self.reject(envelope, RelayRejectReason::ClassificationNotPermitted);
         }
         // (4b) releasability present + matches destination communities
         if envelope.releasability.allowed_communities.is_empty() {
             return self.reject(envelope, RelayRejectReason::MissingReleasability);
         }
-        if !envelope.releasability.allowed_communities.iter().any(|c| dest_policy.communities.contains(c)) {
+        if !envelope
+            .releasability
+            .allowed_communities
+            .iter()
+            .any(|c| dest_policy.communities.contains(c))
+        {
             return self.reject(envelope, RelayRejectReason::ReleasabilityMismatch);
         }
         // (5) size
         let size = envelope.payload_json.to_string().len();
         if size > dest_policy.max_payload_bytes {
-            return self.reject(envelope, RelayRejectReason::OversizedPayload {
-                got: size, limit: dest_policy.max_payload_bytes,
-            });
+            return self.reject(
+                envelope,
+                RelayRejectReason::OversizedPayload {
+                    got: size,
+                    limit: dest_policy.max_payload_bytes,
+                },
+            );
         }
         // (6) expiration
         if envelope.expires_at <= now {
             return self.reject(envelope, RelayRejectReason::Expired);
         }
         // (7) signature verification
-        if !verify(&self.private_key_material, &envelope.payload_digest_hex, &envelope.signature_hex) {
+        if !verify(
+            &self.private_key_material,
+            &envelope.payload_digest_hex,
+            &envelope.signature_hex,
+        ) {
             return self.reject(envelope, RelayRejectReason::InvalidSignature);
         }
         // (8) anti-replay
-        if !self.anti_replay.observe(&envelope.anti_replay_nonce_hex, now) {
+        if !self
+            .anti_replay
+            .observe(&envelope.anti_replay_nonce_hex, now)
+        {
             return self.reject(envelope, RelayRejectReason::ReplayDetected);
         }
         // (9) rate limit
-        let (window_start, count) = self.delivered_count_per_min
+        let (window_start, count) = self
+            .delivered_count_per_min
             .entry(envelope.destination.to_string())
             .or_insert((now, 0));
         if (now - *window_start).whole_seconds() > 60 {
@@ -153,20 +180,31 @@ impl RelayGateway {
         }
         *count += 1;
         // (10) store-and-forward
-        let q = self.queues.entry(envelope.destination.to_string()).or_default();
+        let q = self
+            .queues
+            .entry(envelope.destination.to_string())
+            .or_default();
         if q.len() as u32 >= self.policy.max_queue_depth_per_destination {
             return self.reject(envelope, RelayRejectReason::DeadLettered);
         }
         envelope.delivery_state = DeliveryState::Queued;
-        envelope.ack_state = if self.policy.one_way_export { AckState::None } else { AckState::Pending };
-        q.push(Queued { envelope: envelope.clone() });
+        envelope.ack_state = if self.policy.one_way_export {
+            AckState::None
+        } else {
+            AckState::Pending
+        };
+        q.push(Queued {
+            envelope: envelope.clone(),
+        });
         self.delivered += 1;
         Ok(DeliveryState::Queued)
     }
 
-    fn reject(&mut self, envelope: RelayEnvelope, reason: RelayRejectReason)
-        -> Result<DeliveryState, RelayRejectReason>
-    {
+    fn reject(
+        &mut self,
+        envelope: RelayEnvelope,
+        reason: RelayRejectReason,
+    ) -> Result<DeliveryState, RelayRejectReason> {
         self.rejected += 1;
         self.dead_letters.push((envelope, reason.clone()));
         Err(reason)
@@ -176,7 +214,9 @@ impl RelayGateway {
     /// A production driver would push these to the network here.
     pub fn drain_one(&mut self, destination: &str) -> Option<RelayEnvelope> {
         let q = self.queues.get_mut(destination)?;
-        if q.is_empty() { return None; }
+        if q.is_empty() {
+            return None;
+        }
         let mut item = q.remove(0);
         item.envelope.delivery_state = DeliveryState::Delivered;
         Some(item.envelope)
@@ -190,12 +230,14 @@ mod tests {
     use crate::signing::{canonical_envelope_digest, sign};
     use aeon_contracts::ids::{ActorId, DestinationId, RelayMessageId};
     use aeon_contracts::relay::{
-        AckState, Classification, DeliveryState, Releasability, RelayMessageKind,
+        AckState, Classification, DeliveryState, RelayMessageKind, Releasability,
     };
     use aeon_contracts::version::relay_schema;
     use time::OffsetDateTime;
 
-    fn key() -> Vec<u8> { b"aeon-baseline-key".to_vec() }
+    fn key() -> Vec<u8> {
+        b"aeon-baseline-key".to_vec()
+    }
 
     fn policy() -> RelayPolicy {
         let mut destinations = HashMap::new();
@@ -219,9 +261,12 @@ mod tests {
         }
     }
 
-    fn env(kind: RelayMessageKind, dest: &str, payload: serde_json::Value, key_ok: bool)
-        -> RelayEnvelope
-    {
+    fn env(
+        kind: RelayMessageKind,
+        dest: &str,
+        payload: serde_json::Value,
+        key_ok: bool,
+    ) -> RelayEnvelope {
         let now = OffsetDateTime::UNIX_EPOCH;
         let mid = RelayMessageId::new();
         let nonce = format!("n-{}", uuid::Uuid::new_v4());
@@ -232,11 +277,14 @@ mod tests {
             hex::encode(h.finalize())
         };
         let _dig = canonical_envelope_digest(
-            &mid.to_string(), dest,
+            &mid.to_string(),
+            dest,
             &serde_json::to_string(&kind).unwrap(),
             &payload_digest,
-            now, now + time::Duration::hours(1),
-            "sender-1", &nonce,
+            now,
+            now + time::Duration::hours(1),
+            "sender-1",
+            &nonce,
         );
         let k = key();
         let sig = sign(if key_ok { &k } else { b"other" }, &payload_digest);
@@ -248,8 +296,13 @@ mod tests {
             payload_schema: relay_schema(),
             payload_json: payload,
             payload_digest_hex: payload_digest,
-            classification: Classification { label: "UNCLASSIFIED".into(), caveats: vec![] },
-            releasability: Releasability { allowed_communities: vec!["blue".into()] },
+            classification: Classification {
+                label: "UNCLASSIFIED".into(),
+                caveats: vec![],
+            },
+            releasability: Releasability {
+                allowed_communities: vec!["blue".into()],
+            },
             created_at: now,
             expires_at: now + time::Duration::hours(1),
             sender: ActorId::new("sender-1"),
@@ -263,7 +316,12 @@ mod tests {
     #[test]
     fn valid_track_state_is_accepted() {
         let mut g = RelayGateway::new(policy(), key());
-        let e = env(RelayMessageKind::TrackState, "peer-a", serde_json::json!({"t":"clean"}), true);
+        let e = env(
+            RelayMessageKind::TrackState,
+            "peer-a",
+            serde_json::json!({"t":"clean"}),
+            true,
+        );
         let r = g.submit(e, OffsetDateTime::UNIX_EPOCH).unwrap();
         assert_eq!(r, DeliveryState::Queued);
         assert_eq!(g.queued_depth("peer-a"), 1);
@@ -272,16 +330,31 @@ mod tests {
     #[test]
     fn unknown_destination_is_rejected() {
         let mut g = RelayGateway::new(policy(), key());
-        let e = env(RelayMessageKind::TrackState, "peer-x", serde_json::json!({}), true);
-        assert_eq!(g.submit(e, OffsetDateTime::UNIX_EPOCH).unwrap_err(), RelayRejectReason::UnknownDestination);
+        let e = env(
+            RelayMessageKind::TrackState,
+            "peer-x",
+            serde_json::json!({}),
+            true,
+        );
+        assert_eq!(
+            g.submit(e, OffsetDateTime::UNIX_EPOCH).unwrap_err(),
+            RelayRejectReason::UnknownDestination
+        );
     }
 
     #[test]
     fn kind_not_authorized_for_destination_rejected() {
         let mut g = RelayGateway::new(policy(), key());
-        let e = env(RelayMessageKind::SystemHealth, "peer-a", serde_json::json!({}), true);
-        assert_eq!(g.submit(e, OffsetDateTime::UNIX_EPOCH).unwrap_err(),
-                   RelayRejectReason::KindNotAuthorizedForDestination);
+        let e = env(
+            RelayMessageKind::SystemHealth,
+            "peer-a",
+            serde_json::json!({}),
+            true,
+        );
+        assert_eq!(
+            g.submit(e, OffsetDateTime::UNIX_EPOCH).unwrap_err(),
+            RelayRejectReason::KindNotAuthorizedForDestination
+        );
     }
 
     #[test]
@@ -298,8 +371,12 @@ mod tests {
         let mut g = RelayGateway::new(policy(), key());
         let mut payload = serde_json::Map::new();
         payload.insert(bad_key.to_string(), serde_json::json!({"x": 1}));
-        let e = env(RelayMessageKind::TrackState, "peer-a",
-            serde_json::Value::Object(payload), true);
+        let e = env(
+            RelayMessageKind::TrackState,
+            "peer-a",
+            serde_json::Value::Object(payload),
+            true,
+        );
         let err = g.submit(e, OffsetDateTime::UNIX_EPOCH).unwrap_err();
         assert!(matches!(err, RelayRejectReason::ProhibitedContent(_)));
     }
@@ -307,25 +384,44 @@ mod tests {
     #[test]
     fn invalid_signature_is_rejected() {
         let mut g = RelayGateway::new(policy(), key());
-        let e = env(RelayMessageKind::TrackState, "peer-a", serde_json::json!({}), false);
-        assert_eq!(g.submit(e, OffsetDateTime::UNIX_EPOCH).unwrap_err(),
-                   RelayRejectReason::InvalidSignature);
+        let e = env(
+            RelayMessageKind::TrackState,
+            "peer-a",
+            serde_json::json!({}),
+            false,
+        );
+        assert_eq!(
+            g.submit(e, OffsetDateTime::UNIX_EPOCH).unwrap_err(),
+            RelayRejectReason::InvalidSignature
+        );
     }
 
     #[test]
     fn replay_attempt_is_rejected() {
         let mut g = RelayGateway::new(policy(), key());
-        let e = env(RelayMessageKind::TrackState, "peer-a", serde_json::json!({"t":1}), true);
+        let e = env(
+            RelayMessageKind::TrackState,
+            "peer-a",
+            serde_json::json!({"t":1}),
+            true,
+        );
         let e2 = e.clone();
         g.submit(e, OffsetDateTime::UNIX_EPOCH).unwrap();
-        assert_eq!(g.submit(e2, OffsetDateTime::UNIX_EPOCH).unwrap_err(),
-                   RelayRejectReason::ReplayDetected);
+        assert_eq!(
+            g.submit(e2, OffsetDateTime::UNIX_EPOCH).unwrap_err(),
+            RelayRejectReason::ReplayDetected
+        );
     }
 
     #[test]
     fn expired_envelope_is_rejected() {
         let mut g = RelayGateway::new(policy(), key());
-        let e = env(RelayMessageKind::TrackState, "peer-a", serde_json::json!({}), true);
+        let e = env(
+            RelayMessageKind::TrackState,
+            "peer-a",
+            serde_json::json!({}),
+            true,
+        );
         let future = OffsetDateTime::UNIX_EPOCH + time::Duration::days(2);
         assert_eq!(g.submit(e, future).unwrap_err(), RelayRejectReason::Expired);
     }
@@ -334,7 +430,12 @@ mod tests {
     fn oversized_payload_is_rejected() {
         let mut g = RelayGateway::new(policy(), key());
         let big = "x".repeat(2048);
-        let e = env(RelayMessageKind::TrackState, "peer-a", serde_json::json!({"pad": big}), true);
+        let e = env(
+            RelayMessageKind::TrackState,
+            "peer-a",
+            serde_json::json!({"pad": big}),
+            true,
+        );
         let err = g.submit(e, OffsetDateTime::UNIX_EPOCH).unwrap_err();
         assert!(matches!(err, RelayRejectReason::OversizedPayload { .. }));
     }
@@ -345,11 +446,18 @@ mod tests {
         p.max_queue_depth_per_destination = 2;
         let mut g = RelayGateway::new(p, key());
         for i in 0..3 {
-            let e = env(RelayMessageKind::TrackState, "peer-a",
-                serde_json::json!({"i": i}), true);
+            let e = env(
+                RelayMessageKind::TrackState,
+                "peer-a",
+                serde_json::json!({"i": i}),
+                true,
+            );
             let r = g.submit(e, OffsetDateTime::UNIX_EPOCH);
-            if i < 2 { assert!(r.is_ok()); }
-            else { assert_eq!(r.unwrap_err(), RelayRejectReason::DeadLettered); }
+            if i < 2 {
+                assert!(r.is_ok());
+            } else {
+                assert_eq!(r.unwrap_err(), RelayRejectReason::DeadLettered);
+            }
         }
         assert_eq!(g.dead_letters().len(), 1);
     }
@@ -357,7 +465,12 @@ mod tests {
     #[test]
     fn drain_one_transitions_delivery_state() {
         let mut g = RelayGateway::new(policy(), key());
-        let e = env(RelayMessageKind::TrackState, "peer-a", serde_json::json!({}), true);
+        let e = env(
+            RelayMessageKind::TrackState,
+            "peer-a",
+            serde_json::json!({}),
+            true,
+        );
         g.submit(e, OffsetDateTime::UNIX_EPOCH).unwrap();
         let out = g.drain_one("peer-a").unwrap();
         assert_eq!(out.delivery_state, DeliveryState::Delivered);

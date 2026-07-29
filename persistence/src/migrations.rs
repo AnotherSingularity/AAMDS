@@ -10,11 +10,10 @@ pub struct Migration {
     pub sql: &'static str,
 }
 
-pub const ALL: &[Migration] = &[
-    Migration {
-        id: 1,
-        name: "0001_events_and_audit",
-        sql: r#"
+pub const ALL: &[Migration] = &[Migration {
+    id: 1,
+    name: "0001_events_and_audit",
+    sql: r#"
             CREATE TABLE IF NOT EXISTS schema_migrations (
                 id       INTEGER PRIMARY KEY,
                 name     TEXT NOT NULL UNIQUE,
@@ -52,5 +51,4 @@ pub const ALL: &[Migration] = &[
                 config_json       TEXT NOT NULL
             );
         "#,
-    },
-];
+}];

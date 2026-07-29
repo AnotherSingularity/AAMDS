@@ -13,9 +13,9 @@
 #![forbid(unsafe_code)]
 
 pub mod allowlist;
+pub mod gateway;
 pub mod policy;
 pub mod signing;
-pub mod gateway;
 
 pub use gateway::{RelayGateway, RelayRejectReason};
-pub use policy::{RelayPolicy, DestinationPolicy};
+pub use policy::{DestinationPolicy, RelayPolicy};

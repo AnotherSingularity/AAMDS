@@ -114,8 +114,8 @@ pub fn restart_recovers<A: SensorAdapter>(a: &mut A) -> ConformanceResult {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::adapters::synthetic::{SyntheticAdapter, SyntheticConfig};
     use crate::adapters::replay::ReplayAdapter;
+    use crate::adapters::synthetic::{SyntheticAdapter, SyntheticConfig};
     use time::OffsetDateTime;
 
     fn cfg() -> SyntheticConfig {
