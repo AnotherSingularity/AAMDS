@@ -5,6 +5,7 @@ members = [
     "core-runtime",
     "persistence",
     "sensor-adapter-sdk",
+    "normalization",
 ]
 
 # Additional workspace members are added incrementally per phase.

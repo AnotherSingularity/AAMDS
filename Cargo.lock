@@ -34,6 +34,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "aeon-normalization"
+version = "0.1.0"
+dependencies = [
+ "aeon-contracts",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "time",
+]
+
+[[package]]
 name = "aeon-persistence"
 version = "0.1.0"
 dependencies = [
