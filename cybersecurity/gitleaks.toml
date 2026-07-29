@@ -1,0 +1,28 @@
+# gitleaks policy for the Aeon repository.
+#
+# Baseline: use gitleaks' default ruleset and add a project-specific
+# allowlist for the sample public keys in tests and docs.
+
+title = "aeon-secret-scan"
+
+[allowlist]
+description = "Documentation / test placeholders that would otherwise trip default rules."
+paths = [
+  "docs/security/CRYPTOGRAPHIC_INVENTORY.md",
+  "docs/security/IDENTITY_MODEL.md",
+  # ml-correction test placeholders
+  "ml-correction/src/lib.rs",
+  # secure-relay test placeholders (the string "SIG" and the byte key)
+  "secure-relay/src/gateway.rs",
+]
+regexes = [
+  # placeholder public-key hex used in tests
+  '''"pk"''',
+]
+
+# Additional custom rules would go here for classification markings.
+[[rules]]
+id          = "classification-header"
+description = "Detect a mishandled classification marking header pushed into source."
+regex       = '''(?i)^\s*classification:\s*(SECRET|TOP\s*SECRET|CONFIDENTIAL)\b'''
+tags        = ["classification"]
