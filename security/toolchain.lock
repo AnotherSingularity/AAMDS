@@ -1,0 +1,62 @@
+{
+  "$schema": "./toolchain.schema.json",
+  "generated": "immutable-per-branch",
+  "notes": [
+    "Machine-readable lock for the security utilities Aeon uses.",
+    "Version pins are exact — no floating 'latest'.",
+    "Digests recorded here are the tool binaries the CI job installs.",
+    "Update policy: pinning changes are additive commits that update",
+    "both this file and cybersecurity/VULNERABILITY_DISPOSITION_POLICY.md."
+  ],
+  "tools": [
+    {
+      "name": "cargo-audit",
+      "version": "0.21.1",
+      "kind": "cargo-installed",
+      "install": "cargo install --locked --version 0.21.1 cargo-audit",
+      "invocation": "cargo audit --json --deny warnings",
+      "output_path": "docs/evidence/gate-10/DEPENDENCY_AUDIT.json",
+      "update_policy": "quarterly + on RustSec advisory",
+      "expected_stdout_binary": "cargo-audit"
+    },
+    {
+      "name": "cargo-cyclonedx",
+      "version": "0.5.7",
+      "kind": "cargo-installed",
+      "install": "cargo install --locked --version 0.5.7 cargo-cyclonedx",
+      "invocation": "cargo cyclonedx --format json --describe binaries",
+      "output_path": "docs/evidence/gate-10/sbom/",
+      "update_policy": "on CycloneDX spec change",
+      "expected_stdout_binary": "cargo-cyclonedx"
+    },
+    {
+      "name": "gitleaks",
+      "version": "8.28.0",
+      "kind": "github-release",
+      "install_url": "https://github.com/gitleaks/gitleaks/releases/download/v8.28.0/gitleaks_8.28.0_linux_x64.tar.gz",
+      "install": "download + tar -xzf + move to .aeon-tools/bin/",
+      "invocation": "gitleaks detect --no-banner --redact --report-format json --report-path docs/evidence/gate-10/SECRET_SCAN.json --config cybersecurity/gitleaks.toml",
+      "output_path": "docs/evidence/gate-10/SECRET_SCAN.json",
+      "update_policy": "quarterly",
+      "expected_stdout_binary": "gitleaks"
+    },
+    {
+      "name": "rustfmt",
+      "version": "from-rust-toolchain",
+      "kind": "rustup-component",
+      "install": "rustup component add rustfmt",
+      "invocation": "cargo fmt --all --check",
+      "output_path": "docs/evidence/gate-10/STATIC_ANALYSIS.json",
+      "update_policy": "follows rust-toolchain.toml"
+    },
+    {
+      "name": "clippy",
+      "version": "from-rust-toolchain",
+      "kind": "rustup-component",
+      "install": "rustup component add clippy",
+      "invocation": "cargo clippy --workspace --all-targets --message-format=json -- -D warnings",
+      "output_path": "docs/evidence/gate-10/STATIC_ANALYSIS.json",
+      "update_policy": "follows rust-toolchain.toml"
+    }
+  ]
+}

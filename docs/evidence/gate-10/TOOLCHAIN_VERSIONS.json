@@ -1,0 +1,41 @@
+{
+  "generated_at": "harness-controlled",
+  "toolchain_lock": "security/toolchain.lock",
+  "tools": [
+    {
+      "expected_version": "0.21.1",
+      "installed_version": "0.21.1",
+      "name": "cargo-audit",
+      "path": "/home/user/AAMDS/.aeon-tools/bin/cargo-audit",
+      "status": "ok"
+    },
+    {
+      "expected_version": "0.5.7",
+      "installed_version": "'--help'.",
+      "name": "cargo-cyclonedx",
+      "path": "/home/user/AAMDS/.aeon-tools/bin/cargo-cyclonedx",
+      "status": "version_mismatch"
+    },
+    {
+      "expected_version": "8.28.0",
+      "installed_version": "8.28.0",
+      "name": "gitleaks",
+      "path": "/home/user/AAMDS/.aeon-tools/bin/gitleaks",
+      "status": "ok"
+    },
+    {
+      "expected_version": "from-rust-toolchain",
+      "installed_version": "1.8.0-stable",
+      "name": "rustfmt",
+      "path": "/root/.cargo/bin/rustfmt",
+      "status": "ok"
+    },
+    {
+      "expected_version": "from-rust-toolchain",
+      "installed_version": "0.1.94",
+      "name": "clippy",
+      "path": "/root/.cargo/bin/cargo",
+      "status": "ok"
+    }
+  ]
+}

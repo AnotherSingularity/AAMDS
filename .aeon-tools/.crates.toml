@@ -1,0 +1,3 @@
+[v1]
+"cargo-audit 0.21.1 (registry+https://github.com/rust-lang/crates.io-index)" = ["cargo-audit"]
+"cargo-cyclonedx 0.5.7 (registry+https://github.com/rust-lang/crates.io-index)" = ["cargo-cyclonedx"]

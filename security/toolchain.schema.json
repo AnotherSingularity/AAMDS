@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aeon/security/toolchain.schema.json",
+  "title": "Aeon security-toolchain lockfile",
+  "type": "object",
+  "required": ["tools"],
+  "additionalProperties": true,
+  "properties": {
+    "generated": { "type": "string" },
+    "notes":     { "type": "array", "items": { "type": "string" } },
+    "tools": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["name", "version", "kind", "install", "invocation", "output_path", "update_policy"],
+        "additionalProperties": true,
+        "properties": {
+          "name":            { "type": "string", "minLength": 1 },
+          "version":         { "type": "string", "minLength": 1 },
+          "kind":            { "enum": ["cargo-installed", "rustup-component", "github-release", "system-package"] },
+          "install":         { "type": "string" },
+          "install_url":     { "type": "string" },
+          "expected_digest": { "type": "string" },
+          "invocation":      { "type": "string" },
+          "output_path":     { "type": "string" },
+          "update_policy":   { "type": "string" },
+          "expected_stdout_binary": { "type": "string" }
+        }
+      }
+    }
+  }
+}
