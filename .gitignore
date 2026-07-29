@@ -1,0 +1,14 @@
+/target
+**/target
+node_modules
+dist
+.env
+.env.local
+*.sqlite
+*.sqlite-journal
+*.db
+*.log
+.DS_Store
+Cargo.lock.bak
+/docs/evidence/**/*.tmp
+/verification/**/replay-out

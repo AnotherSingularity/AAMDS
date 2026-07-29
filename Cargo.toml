@@ -1,0 +1,48 @@
+[workspace]
+resolver = "2"
+members = [
+    "contracts",
+]
+
+# Additional workspace members are added incrementally per phase.
+# See docs/implementation/STARTING_STATE.md and the Phase A–N commits.
+
+[workspace.package]
+version      = "0.1.0"
+edition      = "2021"
+rust-version = "1.75"
+license      = "MIT"
+publish      = false
+
+[workspace.dependencies]
+serde       = { version = "1", features = ["derive"] }
+serde_json  = "1"
+thiserror   = "1"
+anyhow      = "1"
+uuid        = { version = "1", features = ["v4", "serde"] }
+time        = { version = "0.3", features = ["serde", "formatting", "parsing", "macros"] }
+tokio       = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time", "signal"] }
+tracing     = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+sha2        = "0.10"
+hex         = "0.4"
+blake3      = "1"
+rusqlite    = { version = "0.31", features = ["bundled"] }
+axum        = { version = "0.7", default-features = false, features = ["http1", "json", "tokio"] }
+tower       = "0.4"
+hyper       = { version = "1", features = ["server"] }
+schemars    = { version = "0.8", features = ["uuid1", "chrono"] }
+proptest    = "1"
+tempfile    = "3"
+walkdir     = "2"
+regex       = "1"
+
+[profile.release]
+opt-level = 3
+lto       = "thin"
+strip     = true
+debug     = false
+
+[profile.dev]
+opt-level = 0
+debug     = 1
