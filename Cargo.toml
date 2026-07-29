@@ -4,6 +4,7 @@ members = [
     "contracts",
     "core-runtime",
     "persistence",
+    "sensor-adapter-sdk",
 ]
 
 # Additional workspace members are added incrementally per phase.

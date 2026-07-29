@@ -50,6 +50,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "aeon-sensor-adapter-sdk"
+version = "0.1.0"
+dependencies = [
+ "aeon-contracts",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror",
+ "time",
+ "uuid",
+]
+
+[[package]]
 name = "ahash"
 version = "0.8.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
