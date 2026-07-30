@@ -1,3 +1,10 @@
+> **⛔ RC1 REJECTED BY INDEPENDENT AUDIT.**
+> The tag `aeon-air-defense-rc1` (commit `d1b8414`) is an **engineering
+> prototype / lab baseline**, NOT a repository-verified integration-ready
+> release. Do **not** advance it through sponsor Gate 11B.
+> See [`docs/verification/RC1_AUDIT_REJECTION.md`](docs/verification/RC1_AUDIT_REJECTION.md).
+> Corrections proceed on a new RC2 branch; RC1 history is preserved intact.
+
 # Aeon Air Defense Information Layer (AAMDS)
 
 Aeon is an **equipment-neutral information, tracking, fusion, operator-awareness,

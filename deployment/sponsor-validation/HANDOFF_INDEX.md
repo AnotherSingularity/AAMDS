@@ -1,5 +1,14 @@
 # Sponsor Handoff Index — Aeon Air Defense RC1
 
+> **⛔ HANDOFF WITHDRAWN — RC1 REJECTED BY INDEPENDENT AUDIT.**
+> Do **not** execute the procedures below against RC1 as an
+> integration-ready release. RC1 is an engineering prototype / lab
+> baseline. Ten release-blocking findings are recorded in
+> [`../../docs/verification/RC1_AUDIT_REJECTION.md`](../../docs/verification/RC1_AUDIT_REJECTION.md).
+> The next legitimate sponsor handoff is RC2 (a future branch).
+> This document is preserved verbatim for audit traceability.
+
+
 An authorized integration team can drive the Gate 11B acceptance from
 this single document.
 

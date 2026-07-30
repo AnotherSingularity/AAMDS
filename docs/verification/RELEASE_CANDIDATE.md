@@ -1,5 +1,13 @@
 # Aeon Air Defense Information Layer — Release-Candidate Report
 
+> **⛔ WITHDRAWN — RC1 REJECTED BY INDEPENDENT AUDIT.**
+> The rating recorded in this file is **superseded** by
+> [`RC1_AUDIT_REJECTION.md`](RC1_AUDIT_REJECTION.md). The correct rating
+> for `d1b8414` is `ENGINEERING PROTOTYPE / LAB BASELINE — REJECTED BY
+> INDEPENDENT AUDIT`. This file is preserved verbatim for audit
+> traceability. Do **not** cite the rating below as current.
+
+
 ## Repository state
 
 - **Branch**: `claude/aeon-air-defense-layer-wico33`

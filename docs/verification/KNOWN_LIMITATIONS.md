@@ -1,5 +1,13 @@
 # Known Limitations
 
+> **RC1 was REJECTED by independent audit.** The classifications
+> below are the ones I recorded before the audit. They are
+> **inaccurate as a release claim** — see
+> [`RC1_AUDIT_REJECTION.md`](RC1_AUDIT_REJECTION.md) for the ten
+> release-blocking findings. This file is preserved verbatim for
+> audit traceability.
+
+
 This document lists **honestly** what is implemented, what is scaffolded, and
 what requires sponsor-supplied integration to complete. It is normative for
 the `MILITARY INTEGRATION-READY BASELINE` claim: no gate in the final report

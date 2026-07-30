@@ -1,0 +1,23 @@
+RC1 REJECTED BY INDEPENDENT AUDIT
+==================================
+
+Tag:    aeon-air-defense-rc1
+Commit: d1b8414181bc164b426ef23e4f591ec5c3c5eeb7
+Tag object: 8bc2edac76afbb75ded176c2f39c717e39784297
+
+The rating recorded in AEON_AIR_DEFENSE_RC1_MANIFEST.json —
+
+    MILITARY INTEGRATION-READY RELEASE CANDIDATE: REPOSITORY VERIFIED
+    SPONSOR PLATFORM VALIDATION: REQUIRED
+
+— has been withdrawn. The correct rating is:
+
+    ENGINEERING PROTOTYPE / LAB BASELINE
+    REJECTED BY INDEPENDENT AUDIT
+
+Ten release-blocking findings are recorded in
+    docs/verification/RC1_AUDIT_REJECTION.md
+
+Do NOT proceed with sponsor Gate 11B testing using this release
+candidate. Corrections are made on a new RC2 branch; RC1 history and
+frozen evidence remain intact for audit traceability.
