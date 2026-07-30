@@ -158,6 +158,11 @@ for t in lock["tools"]:
     })
 open(out_path,"w").write(json.dumps(report, indent=2, sort_keys=True))
 print("evidence:", out_path)
+# Exit non-zero if any tool is missing or version-mismatched.
+bad=[t for t in report["tools"] if t["status"] not in ("ok",)]
+if bad:
+    for t in bad: print("mismatch:", t, file=sys.stderr)
+    sys.exit(1)
 EOF
 }
 
