@@ -106,11 +106,7 @@ impl RelayGateway {
             None => return self.reject(envelope, RelayRejectReason::UnknownDestination),
         };
         // (3b) destination authorized for kind?
-        if !dest_policy
-            .allowed_kinds
-            .iter()
-            .any(|k| *k == envelope.kind)
-        {
+        if !dest_policy.allowed_kinds.contains(&envelope.kind) {
             return self.reject(envelope, RelayRejectReason::KindNotAuthorizedForDestination);
         }
         // (4a) classification present + permitted
@@ -119,8 +115,7 @@ impl RelayGateway {
         }
         if !dest_policy
             .allowed_classification_labels
-            .iter()
-            .any(|l| l == &envelope.classification.label)
+            .contains(&envelope.classification.label)
         {
             return self.reject(envelope, RelayRejectReason::ClassificationNotPermitted);
         }

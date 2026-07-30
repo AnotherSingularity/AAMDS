@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aeon/deployment/package-manifest.schema.json",
+  "title": "Aeon deployment package manifest",
+  "type": "object",
+  "required": [
+    "product","package_profile","version","source_commit","build_timestamp",
+    "supported_architecture","supported_os","artifacts","installation_procedure_version",
+    "upgrade_procedure_version","rollback_procedure_version",
+    "minimum_resources","required_privileges","known_limitations","signature"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "product":            { "type":"string" },
+    "package_profile":    { "enum":["developer","edge","fixed-site","disconnected","data-center","private-cloud"] },
+    "version":            { "type":"string" },
+    "source_commit":      { "type":"string", "pattern":"^[0-9a-f]{7,64}$" },
+    "build_timestamp":    { "type":"string" },
+    "supported_architecture":{ "type":"array", "items":{"type":"string"}, "minItems":1 },
+    "supported_os":       { "type":"array", "items":{"type":"string"}, "minItems":1 },
+    "artifacts": {
+      "type":"array", "minItems":1,
+      "items": {
+        "type":"object",
+        "required":["path","sha256","size_bytes"],
+        "additionalProperties": false,
+        "properties": {
+          "path":       { "type":"string" },
+          "sha256":     { "type":"string", "pattern":"^[0-9a-f]{64}$" },
+          "size_bytes": { "type":"integer", "minimum": 0 }
+        }
+      }
+    },
+    "sbom_references":    { "type":"array", "items":{"type":"string"} },
+    "configuration_schema_references": { "type":"array", "items":{"type":"string"} },
+    "installation_procedure_version": { "type":"string" },
+    "upgrade_procedure_version":      { "type":"string" },
+    "rollback_procedure_version":     { "type":"string" },
+    "minimum_resources": {
+      "type":"object",
+      "required":["cpu_cores","memory_mb","disk_mb"],
+      "additionalProperties": false,
+      "properties": {
+        "cpu_cores": { "type":"number", "minimum": 0 },
+        "memory_mb": { "type":"integer", "minimum": 0 },
+        "disk_mb":   { "type":"integer", "minimum": 0 }
+      }
+    },
+    "required_privileges": { "type":"array", "items":{"type":"string"} },
+    "known_limitations":   { "type":"array", "items":{"type":"string"} },
+    "signature": {
+      "type":"object",
+      "required":["method","key_id","signed_manifest_digest"],
+      "additionalProperties": false,
+      "properties": {
+        "method":              { "enum":["dev-hmac-sha256","kms-hsm"] },
+        "key_id":              { "type":"string" },
+        "signed_manifest_digest": { "type":"string" },
+        "note":                { "type":"string" }
+      }
+    }
+  }
+}

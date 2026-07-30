@@ -58,22 +58,34 @@ step_scope_boundary(){
   }
 }
 step_security() {
-  log "dependency-audit:"
-  cargo audit 2>/dev/null || log "  cargo-audit not installed (advisory-only step)"
-  log "secret scan:"
-  if command -v gitleaks >/dev/null 2>&1; then
-    gitleaks detect --no-banner --redact --config cybersecurity/gitleaks.toml || true
-  else
-    log "  gitleaks not installed (advisory-only step)"
-  fi
+  # verify:security now runs the real pinned tools and fails closed.
+  log "installing/verifying pinned security toolchain"
+  ./tools/security/install-security-tools.sh --check \
+    || ./tools/security/install-security-tools.sh
+  log "running dependency-audit + secret-scan + static-analysis + SBOM"
+  ./tools/security/run-security-checks.sh
 }
+step_security_tools()   { ./tools/security/install-security-tools.sh --check; }
+step_dep_audit()        { PATH="$PWD/.aeon-tools/bin:$PATH" cargo audit --json > docs/evidence/gate-10/DEPENDENCY_AUDIT.json && python3 tools/security/check-dispositions.py --audit docs/evidence/gate-10/DEPENDENCY_AUDIT.json --ledger cybersecurity/vulnerability-dispositions.json --out docs/evidence/gate-10/DEPENDENCY_AUDIT_DISPOSITIONED.json; }
+step_secret_scan()      { PATH="$PWD/.aeon-tools/bin:$PATH" gitleaks detect --no-banner --redact --config cybersecurity/gitleaks.toml --report-format json --report-path docs/evidence/gate-10/SECRET_SCAN.json; }
 step_sbom() {
-  if command -v cargo-cyclonedx >/dev/null 2>&1; then
-    cargo cyclonedx --format json
-  else
-    log "cargo-cyclonedx not installed (advisory-only step)"
-  fi
+  need cargo "install rust toolchain"
+  PATH="$PWD/.aeon-tools/bin:$PATH" cargo cyclonedx --format json >/dev/null 2>&1 || die "cargo-cyclonedx failed"
+  mkdir -p docs/evidence/gate-10/sbom
+  find . -maxdepth 3 -name '*.cdx.json' -not -path './target/*' \
+    -not -path './docs/*' -print0 | while IFS= read -r -d '' f; do
+      rel=$(dirname "$f" | sed 's|^\./||'); base=$(basename "$f")
+      mv -f "$f" "docs/evidence/gate-10/sbom/${rel//\//__}__$base"
+    done
+  python3 tools/security/validate-sboms.py docs/evidence/gate-10/sbom > docs/evidence/gate-10/SBOM_INDEX.json
 }
+step_package_integrity() { for p in developer edge disconnected; do ./tools/deployment/test-profile.sh "$p" package-integrity; done; }
+step_fresh_install()     { for p in developer edge disconnected; do ./tools/deployment/test-profile.sh "$p" fresh-install; done; }
+step_upgrade()           { ./tools/deployment/test-profile.sh developer upgrade; }
+step_rollback()          { ./tools/deployment/test-profile.sh developer rollback; }
+step_backup_restore()    { ./tools/deployment/test-profile.sh developer backup; }
+step_offline_install()   { ./tools/deployment/test-profile.sh disconnected offline-install; }
+step_deployment()        { ./tools/deployment/test-profile.sh developer full-cycle; }
 step_packages() {
   need bash "install bash"
   log "package build smoke — see deployment/"
@@ -104,37 +116,48 @@ step_docs() {
 run_all() {
   step_format
   step_typecheck
-  step_lint || log "lint returned non-zero (advisory)"
+  step_lint
   step_unit
   step_property || true
   step_integration || true
   step_e2e || true
   step_schemas
   step_migrations
-  step_replay || true
+  step_replay
   step_scope_boundary
-  step_security || true
-  step_sbom || true
+  step_security
+  step_deployment
   step_docs
   log "verify:all completed"
 }
 
 case "$target" in
-  format)          step_format ;;
-  lint)            step_lint ;;
-  typecheck)       step_typecheck ;;
-  unit)            step_unit ;;
-  property)        step_property ;;
-  integration)     step_integration ;;
-  e2e)             step_e2e ;;
-  schemas)         step_schemas ;;
-  migrations)      step_migrations ;;
-  replay)          step_replay ;;
-  scope-boundary)  step_scope_boundary ;;
-  security)        step_security ;;
-  sbom)            step_sbom ;;
-  packages)        step_packages ;;
-  docs)            step_docs ;;
-  all)             run_all ;;
+  format)             step_format ;;
+  lint)               step_lint ;;
+  typecheck)          step_typecheck ;;
+  unit)               step_unit ;;
+  property)           step_property ;;
+  integration)        step_integration ;;
+  e2e)                step_e2e ;;
+  schemas)            step_schemas ;;
+  migrations)         step_migrations ;;
+  replay)             step_replay ;;
+  scope-boundary)     step_scope_boundary ;;
+  security)           step_security ;;
+  security-tools)     step_security_tools ;;
+  dependency-audit)   step_dep_audit ;;
+  secret-scan)        step_secret_scan ;;
+  static-analysis)    cargo clippy --workspace --all-targets -- -D warnings ;;
+  sbom)               step_sbom ;;
+  packages)           step_packages ;;
+  package-integrity)  step_package_integrity ;;
+  fresh-install)      step_fresh_install ;;
+  upgrade)            step_upgrade ;;
+  rollback)           step_rollback ;;
+  backup-restore)     step_backup_restore ;;
+  offline-install)    step_offline_install ;;
+  deployment)         step_deployment ;;
+  docs)               step_docs ;;
+  all)                run_all ;;
   *) echo "unknown target: $target" >&2; exit 2 ;;
 esac

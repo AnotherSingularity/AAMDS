@@ -87,6 +87,7 @@ impl EventStore {
     }
 
     /// Compute the chained integrity digest for a candidate event.
+    #[allow(clippy::too_many_arguments)]
     fn compute_digest(
         prev: &str,
         event_type: &str,

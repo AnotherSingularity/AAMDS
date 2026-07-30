@@ -362,8 +362,9 @@ mod tests {
             .apply(id, "sensor:s1/bias", 1.0, 0.9, false, "x")
             .unwrap_err();
         assert!(matches!(err, ModelError::NotActive(ModelState::Approved)));
-        // Activate
-        drop(rt);
+        // Activate; the CorrectionRuntime borrows &reg so we drop the
+        // outer variable to release the borrow before mutating reg.
+        let _ = rt;
         reg.transition_state(id, ModelState::Active).unwrap();
         let rt = CorrectionRuntime::new(&reg);
         let c = rt

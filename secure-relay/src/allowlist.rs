@@ -21,7 +21,7 @@ pub const ALLOWED_KINDS: &[RelayMessageKind] = &[
 ];
 
 pub fn is_allowed(kind: RelayMessageKind) -> bool {
-    ALLOWED_KINDS.iter().any(|k| *k == kind)
+    ALLOWED_KINDS.contains(&kind)
 }
 
 #[cfg(test)]

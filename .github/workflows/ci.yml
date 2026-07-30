@@ -9,73 +9,196 @@ jobs:
   format:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - uses: dtolnay/rust-toolchain@b3b07ba8b418998c39fb20f53e8b695cdcc8de1b  # stable
         with: { components: rustfmt }
       - run: cargo fmt --all -- --check
 
-  clippy:
+  static-analysis:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: dtolnay/rust-toolchain@b3b07ba8b418998c39fb20f53e8b695cdcc8de1b
         with: { components: clippy }
       - run: cargo clippy --workspace --all-targets -- -D warnings
 
   unit-tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: dtolnay/rust-toolchain@b3b07ba8b418998c39fb20f53e8b695cdcc8de1b
       - run: cargo test --workspace --all-targets
 
   verify-scope-boundary:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: dtolnay/rust-toolchain@b3b07ba8b418998c39fb20f53e8b695cdcc8de1b
       - run: ./tools/verify.sh scope-boundary
 
   deterministic-replay:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - run: ./tools/verify.sh replay
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: dtolnay/rust-toolchain@b3b07ba8b418998c39fb20f53e8b695cdcc8de1b
+      - run: cargo test -p aeon-simulation --test determinism
 
   dependency-audit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - run: cargo install cargo-audit --locked || true
-      - run: cargo audit --deny warnings || true  # advisory-only until dispositioned
-
-  sbom-generation:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - run: cargo install cargo-cyclonedx --locked || true
-      - run: cargo cyclonedx --format json || true
-      - uses: actions/upload-artifact@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: dtolnay/rust-toolchain@b3b07ba8b418998c39fb20f53e8b695cdcc8de1b
+      - name: install pinned security tools
+        run: ./tools/security/install-security-tools.sh
+      - name: run cargo audit (fail on unresolved or expired dispositions)
+        run: |
+          export PATH="$PWD/.aeon-tools/bin:$PATH"
+          cargo audit --json > docs/evidence/gate-10/DEPENDENCY_AUDIT.json || true
+          python3 tools/security/check-dispositions.py \
+            --audit  docs/evidence/gate-10/DEPENDENCY_AUDIT.json \
+            --ledger cybersecurity/vulnerability-dispositions.json \
+            --out    docs/evidence/gate-10/DEPENDENCY_AUDIT_DISPOSITIONED.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         if: always()
         with:
-          name: sbom
-          path: "**/*.cdx.json"
+          name: dependency-audit
+          path: docs/evidence/gate-10/DEPENDENCY_AUDIT*.json
 
   secret-scan:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with: { fetch-depth: 0 }
-      - name: gitleaks
-        uses: gitleaks/gitleaks-action@v2
-        with: { config-path: cybersecurity/gitleaks.toml }
-        continue-on-error: true
+      - uses: dtolnay/rust-toolchain@b3b07ba8b418998c39fb20f53e8b695cdcc8de1b
+      - name: install pinned security tools
+        run: ./tools/security/install-security-tools.sh
+      - name: gitleaks (fail on findings)
+        run: |
+          export PATH="$PWD/.aeon-tools/bin:$PATH"
+          gitleaks detect --no-banner --redact \
+            --report-format json \
+            --report-path docs/evidence/gate-10/SECRET_SCAN.json \
+            --config cybersecurity/gitleaks.toml
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: secret-scan
+          path: docs/evidence/gate-10/SECRET_SCAN.json
+
+  sbom-generation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: dtolnay/rust-toolchain@b3b07ba8b418998c39fb20f53e8b695cdcc8de1b
+      - name: install pinned security tools
+        run: ./tools/security/install-security-tools.sh
+      - name: generate + validate SBOMs
+        run: |
+          export PATH="$PWD/.aeon-tools/bin:$PATH"
+          cargo cyclonedx --format json
+          mkdir -p docs/evidence/gate-10/sbom
+          find . -maxdepth 3 -name '*.cdx.json' -not -path './target/*' \
+            -not -path './docs/*' -print0 \
+          | while IFS= read -r -d '' f; do
+              rel=$(dirname "$f" | sed 's|^\./||')
+              base=$(basename "$f")
+              mv -f "$f" "docs/evidence/gate-10/sbom/${rel//\//__}__$base"
+            done
+          python3 tools/security/validate-sboms.py docs/evidence/gate-10/sbom \
+            > docs/evidence/gate-10/SBOM_INDEX.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: sbom
+          path: docs/evidence/gate-10/sbom/*.cdx.json
+
+  security-evidence-validation:
+    runs-on: ubuntu-latest
+    needs: [dependency-audit, secret-scan, sbom-generation, static-analysis]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: dtolnay/rust-toolchain@b3b07ba8b418998c39fb20f53e8b695cdcc8de1b
+      - run: |
+          ./tools/security/install-security-tools.sh
+          ./tools/security/run-security-checks.sh
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: gate-10-evidence
+          path: docs/evidence/gate-10/
+
+  package-build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        profile: [developer, edge, disconnected]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: dtolnay/rust-toolchain@b3b07ba8b418998c39fb20f53e8b695cdcc8de1b
+      - run: sudo apt-get update && sudo apt-get install -y sqlite3
+      - run: ./tools/deployment/build-package.sh ${{ matrix.profile }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: package-${{ matrix.profile }}
+          path: target/deploy/${{ matrix.profile }}/
+
+  fresh-install-smoke:
+    runs-on: ubuntu-latest
+    needs: package-build
+    strategy:
+      matrix:
+        profile: [developer, edge, disconnected]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: dtolnay/rust-toolchain@b3b07ba8b418998c39fb20f53e8b695cdcc8de1b
+      - run: sudo apt-get update && sudo apt-get install -y sqlite3
+      - run: ./tools/deployment/test-profile.sh ${{ matrix.profile }} fresh-install
+      - run: ./tools/deployment/test-profile.sh ${{ matrix.profile }} package-integrity
+
+  upgrade-smoke:
+    runs-on: ubuntu-latest
+    needs: package-build
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: dtolnay/rust-toolchain@b3b07ba8b418998c39fb20f53e8b695cdcc8de1b
+      - run: sudo apt-get update && sudo apt-get install -y sqlite3
+      - run: ./tools/deployment/test-profile.sh developer upgrade
+      - run: ./tools/deployment/test-profile.sh developer rollback
+
+  backup-restore-smoke:
+    runs-on: ubuntu-latest
+    needs: package-build
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: dtolnay/rust-toolchain@b3b07ba8b418998c39fb20f53e8b695cdcc8de1b
+      - run: sudo apt-get update && sudo apt-get install -y sqlite3
+      - run: ./tools/deployment/test-profile.sh developer backup
+
+  offline-install-smoke:
+    runs-on: ubuntu-latest
+    needs: package-build
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: dtolnay/rust-toolchain@b3b07ba8b418998c39fb20f53e8b695cdcc8de1b
+      - run: sudo apt-get update && sudo apt-get install -y sqlite3
+      - run: ./tools/deployment/test-profile.sh disconnected offline-install
+
+  deployment-evidence-validation:
+    runs-on: ubuntu-latest
+    needs: [fresh-install-smoke, upgrade-smoke, backup-restore-smoke, offline-install-smoke]
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: dtolnay/rust-toolchain@b3b07ba8b418998c39fb20f53e8b695cdcc8de1b
+      - run: sudo apt-get update && sudo apt-get install -y sqlite3
+      - name: run full deployment cycle for developer profile
+        run: ./tools/deployment/test-profile.sh developer full-cycle
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: gate-11a-evidence
+          path: docs/evidence/gate-11/
 
   documentation-validation:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - run: ./tools/verify.sh docs

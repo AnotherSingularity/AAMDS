@@ -125,7 +125,8 @@ def which(n):
 def ver(n):
     try:
         if n in ("cargo-audit","cargo-cyclonedx"):
-            r=subprocess.run([n,"--version"],capture_output=True,text=True,check=False)
+            sub=n[len("cargo-"):]
+            r=subprocess.run(["cargo",sub,"--version"],capture_output=True,text=True,check=False)
             return (r.stdout or r.stderr).strip().split()[-1].lstrip("v")
         if n=="gitleaks":
             r=subprocess.run([n,"version"],capture_output=True,text=True,check=False)
@@ -163,7 +164,7 @@ EOF
 log "toolchain lock: security/toolchain.lock"
 if [ "$check_only" -eq 0 ]; then
   # install cargo tools
-  for tool_entry in "cargo-audit 0.21.1" "cargo-cyclonedx 0.5.7"; do
+  for tool_entry in "cargo-audit 0.22.2" "cargo-cyclonedx 0.5.7"; do
     read -r name version <<<"$tool_entry"
     if verify_version "$name" "$version" >/dev/null 2>&1; then
       log "  $name $version already present"
@@ -187,7 +188,7 @@ fi
 
 log "verifying versions match lock:"
 overall=0
-for tool_entry in "cargo-audit 0.21.1" "cargo-cyclonedx 0.5.7" "gitleaks 8.28.0" "rustfmt from-rust-toolchain" "clippy from-rust-toolchain"; do
+for tool_entry in "cargo-audit 0.22.2" "cargo-cyclonedx 0.5.7" "gitleaks 8.28.0" "rustfmt from-rust-toolchain" "clippy from-rust-toolchain"; do
   read -r name version <<<"$tool_entry"
   verify_version "$name" "$version" || overall=1
 done

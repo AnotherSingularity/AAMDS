@@ -64,12 +64,10 @@ pub fn matches_prohibited(s: &str) -> Option<&'static str> {
             c => c.to_ascii_lowercase(),
         })
         .collect();
-    for tok in PROHIBITED_TOKENS {
-        if norm.contains(tok) {
-            return Some(tok);
-        }
-    }
-    None
+    PROHIBITED_TOKENS
+        .iter()
+        .copied()
+        .find(|tok| norm.contains(*tok))
 }
 
 /// Reason a relay envelope may be rejected on scope grounds.

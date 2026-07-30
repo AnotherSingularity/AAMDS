@@ -67,7 +67,7 @@ mod tests {
     #[test]
     fn serialisation_round_trip_preserves_variant() {
         let v: Known<f64> = Known::Estimated {
-            value: 3.14,
+            value: 2.5,
             method: "kalman".into(),
         };
         let s = serde_json::to_string(&v).unwrap();

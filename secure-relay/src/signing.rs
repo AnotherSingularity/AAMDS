@@ -43,6 +43,7 @@ pub fn verify(
 /// Canonical digest over the fields that must be integrity-bound by the
 /// signature. The scheme is chosen so a change to any of these fields
 /// invalidates the signature.
+#[allow(clippy::too_many_arguments)]
 pub fn canonical_envelope_digest(
     message_id: &str,
     destination: &str,

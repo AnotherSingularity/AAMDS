@@ -11,9 +11,9 @@
   "tools": [
     {
       "name": "cargo-audit",
-      "version": "0.21.1",
+      "version": "0.22.2",
       "kind": "cargo-installed",
-      "install": "cargo install --locked --version 0.21.1 cargo-audit",
+      "install": "cargo install --locked --version 0.22.2 cargo-audit",
       "invocation": "cargo audit --json --deny warnings",
       "output_path": "docs/evidence/gate-10/DEPENDENCY_AUDIT.json",
       "update_policy": "quarterly + on RustSec advisory",
