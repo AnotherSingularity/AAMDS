@@ -28,10 +28,59 @@ use aeon_contracts::track::{
 use aeon_contracts::uncertainty::Confidence;
 use aeon_contracts::unknown::Known;
 use aeon_contracts::version::{track_schema, track_update_schema};
-use std::collections::HashMap;
+use std::collections::{BTreeMap, BTreeSet};
 use time::OffsetDateTime;
+use uuid::Uuid;
 
 pub const ALGORITHM_VERSION: &str = "aeon-track/1.0";
+
+/// Deterministic identifier source.
+///
+/// RC1 finding 9: the engine used `TrackId::new()` internally, which
+/// hides a `Uuid::new_v4()` call. That made replays non-deterministic
+/// even when the input sequence and policy were identical.
+///
+/// RC2 requires an *explicit* deterministic identifier source. Each
+/// engine gets exactly one, seeded from a stable canonical input
+/// (typically the scenario / runtime identifier); ids come out of a
+/// deterministic hash chain over the seed and a monotone counter.
+///
+/// Callers that legitimately want a random id source (e.g. a
+/// long-running non-replay production runtime) can construct one from
+/// a random seed and record it in the runtime identity — the
+/// determinism property still holds *given the recorded seed*.
+#[derive(Debug, Clone)]
+pub struct DeterministicIdSource {
+    seed: [u8; 32],
+    counter: u64,
+}
+
+impl DeterministicIdSource {
+    pub fn from_seed_bytes(seed: &[u8]) -> Self {
+        use sha2::{Digest, Sha256};
+        let s: [u8; 32] = Sha256::digest(seed).into();
+        Self { seed: s, counter: 0 }
+    }
+    pub fn from_seed(seed: &str) -> Self {
+        Self::from_seed_bytes(seed.as_bytes())
+    }
+    /// Produce the next track id in the deterministic sequence.
+    pub fn next_track_id(&mut self) -> TrackId {
+        use sha2::{Digest, Sha256};
+        self.counter = self.counter.wrapping_add(1);
+        let mut h = Sha256::new();
+        h.update(self.seed);
+        h.update(self.counter.to_be_bytes());
+        let digest: [u8; 32] = h.finalize().into();
+        let mut bytes = [0u8; 16];
+        bytes.copy_from_slice(&digest[..16]);
+        // Force UUID version 4 + variant bits so this is a well-formed
+        // UUID; the entropy is deterministic, not random.
+        bytes[6] = (bytes[6] & 0x0f) | 0x40;
+        bytes[8] = (bytes[8] & 0x3f) | 0x80;
+        TrackId(Uuid::from_bytes(bytes))
+    }
+}
 
 /// Policy knobs. Every value is versioned via the enclosing
 /// configuration; see docs/architecture/COMPONENT_MODEL.md.
@@ -71,21 +120,44 @@ pub enum IngestOutcome {
 }
 
 /// Deterministic track engine.
-#[derive(Debug, Default)]
+///
+/// RC2 requires:
+///   * ordered iteration (BTreeMap/BTreeSet, never HashMap/HashSet on
+///     any state-affecting path);
+///   * an explicit deterministic identifier source;
+///   * a stable tie-break rule (see `find_association`).
+#[derive(Debug)]
 pub struct TrackEngine {
     pub policy: TrackPolicy,
-    tracks: HashMap<TrackId, Track>,
+    tracks: BTreeMap<TrackId, Track>,
     /// Observation-ids we have already integrated (for idempotent ingest).
-    seen_observations: std::collections::HashSet<String>,
+    seen_observations: BTreeSet<String>,
     /// Monotonic deterministic sequence, per track.
-    per_track_seq: HashMap<TrackId, u64>,
+    per_track_seq: BTreeMap<TrackId, u64>,
+    /// Deterministic id source for track initiation.
+    id_source: DeterministicIdSource,
+    /// Monotone insertion order, used as a stable tie-break in
+    /// find_association() when two candidates share the same distance.
+    insertion_order: BTreeMap<TrackId, u64>,
+    next_insertion_ordinal: u64,
 }
 
 impl TrackEngine {
+    /// Legacy constructor; seeds the id source from a fixed string. Callers
+    /// that need cross-scenario id isolation should use `with_id_source`.
     pub fn new(policy: TrackPolicy) -> Self {
+        Self::with_id_source(policy, DeterministicIdSource::from_seed("aeon-default"))
+    }
+
+    pub fn with_id_source(policy: TrackPolicy, id_source: DeterministicIdSource) -> Self {
         Self {
             policy,
-            ..Self::default()
+            tracks: BTreeMap::new(),
+            seen_observations: BTreeSet::new(),
+            per_track_seq: BTreeMap::new(),
+            id_source,
+            insertion_order: BTreeMap::new(),
+            next_insertion_ordinal: 0,
         }
     }
 
@@ -136,7 +208,11 @@ impl TrackEngine {
     }
 
     fn find_association(&self, pos: &CanonicalPosition) -> Option<TrackId> {
-        let mut best: Option<(TrackId, f64)> = None;
+        // Deterministic tie-break: (distance ASC, insertion_ordinal ASC).
+        // insertion_ordinal is a monotone counter incremented at
+        // initiate_track, so the "oldest track wins" tie-break is
+        // reproducible regardless of TrackId lexical order.
+        let mut best: Option<(f64, u64, TrackId)> = None;
         for (id, t) in &self.tracks {
             if matches!(t.status, TrackStatus::Retired) {
                 continue;
@@ -146,14 +222,16 @@ impl TrackEngine {
             };
             let d = great_circle_distance_m(p, pos);
             if d <= self.policy.correlation_gate_m {
-                match best {
-                    None => best = Some((*id, d)),
-                    Some((_, prev_d)) if d < prev_d => best = Some((*id, d)),
-                    _ => {}
-                }
+                let ord = *self.insertion_order.get(id).unwrap_or(&u64::MAX);
+                let candidate = (d, ord, *id);
+                best = Some(match best {
+                    None => candidate,
+                    Some(prev) if candidate < prev => candidate,
+                    Some(prev) => prev,
+                });
             }
         }
-        best.map(|(id, _)| id)
+        best.map(|(_, _, id)| id)
     }
 
     fn next_seq(&mut self, id: TrackId) -> u64 {
@@ -168,7 +246,9 @@ impl TrackEngine {
         pos: CanonicalPosition,
         now: OffsetDateTime,
     ) -> TrackUpdate {
-        let id = TrackId::new();
+        let id = self.id_source.next_track_id();
+        self.next_insertion_ordinal = self.next_insertion_ordinal.wrapping_add(1);
+        self.insertion_order.insert(id, self.next_insertion_ordinal);
         let track = Track {
             schema_version: track_schema(),
             track_id: id,

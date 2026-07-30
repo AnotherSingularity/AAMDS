@@ -4,7 +4,7 @@ use aeon_contracts::ids::{AdapterId, SensorId, SourceSystemId};
 use aeon_contracts::provenance::{Integrity, Provenance};
 use aeon_contracts::track::TrackUpdate;
 use aeon_sensor_adapter_sdk::adapter::SensorAdapter;
-use aeon_track_management::{IngestOutcome, TrackEngine, TrackPolicy};
+use aeon_track_management::{DeterministicIdSource, IngestOutcome, TrackEngine, TrackPolicy};
 use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 
@@ -24,7 +24,13 @@ pub fn run_pipeline<A: SensorAdapter>(
     now_supplier: impl Fn() -> OffsetDateTime,
 ) -> anyhow::Result<PipelineOutcome> {
     adapter.connect().map_err(|e| anyhow::anyhow!("{e}"))?;
-    let mut engine = TrackEngine::new(policy);
+    // Deterministic id source seeded from the scenario name so that
+    // running the same scenario twice produces bit-identical track
+    // ids (RC2 finding 9).
+    let mut engine = TrackEngine::with_id_source(
+        policy,
+        DeterministicIdSource::from_seed(scenario_name),
+    );
     let mut updates = Vec::new();
     let mut rejected = 0usize;
     let mut seq = 0u64;

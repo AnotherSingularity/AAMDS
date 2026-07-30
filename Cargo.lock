@@ -141,6 +141,7 @@ dependencies = [
  "sha2",
  "tempfile",
  "time",
+ "uuid",
 ]
 
 [[package]]
@@ -150,6 +151,7 @@ dependencies = [
  "aeon-contracts",
  "serde",
  "serde_json",
+ "sha2",
  "thiserror",
  "time",
  "uuid",
