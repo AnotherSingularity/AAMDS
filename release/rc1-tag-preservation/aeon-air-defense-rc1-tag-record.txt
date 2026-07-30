@@ -1,0 +1,41 @@
+object d1b8414181bc164b426ef23e4f591ec5c3c5eeb7
+type commit
+tag aeon-air-defense-rc1
+tagger Claude <noreply@anthropic.com> 1785414657 +0000
+
+Aeon Air Defense Information Layer — Release Candidate 1
+
+Rating:
+  MILITARY INTEGRATION-READY RELEASE CANDIDATE: REPOSITORY VERIFIED
+  SPONSOR PLATFORM VALIDATION: REQUIRED
+
+Gate decisions:
+  Gate 10:          PASS
+  Gate 11A:         PASS
+  Gate 11B:         SPONSOR VALIDATION REQUIRED
+  Gate 11 overall:  PARTIAL
+
+Repository-controlled evidence:
+  * 81 unit / property / integration / adversarial tests, 0 fail
+  * 8  deployment negative-path regressions,          0 fail
+  * 0  cargo-audit vulnerabilities (143 dependencies)
+  * 0  gitleaks findings across full history
+  * clippy -D warnings clean
+  * 10/10 CycloneDX SBOMs validated
+  * scope-boundary scan PASS (no weapon-control / firing / launch /
+    guidance / aimpoint / engagement interface exists;
+    RelayMessageKind holds exactly 4 informational variants)
+  * All 6 profile packages built + integrity verified
+  * developer / edge / disconnected full-cycle all_pass=true
+
+Contract freeze: interface-control-documents/RC1_CONTRACT_FREEZE.md
+Release manifest: release/AEON_AIR_DEFENSE_RC1_MANIFEST.json
+Sponsor handoff:  deployment/sponsor-validation/HANDOFF_INDEX.md
+
+Signature: development / unsigned (no sponsor signing infrastructure
+available at RC1 time). Sponsor deployments substitute kms-hsm
+signing before production use.
+
+No claim of accreditation, deployment approval, government
+certification, combat readiness, plug-and-play compatibility, or
+FIPS validation is made or implied.
