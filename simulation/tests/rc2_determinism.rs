@@ -96,7 +96,12 @@ fn deterministic_id_source_wraps_stable_stream() {
 /// both existing tracks. The correlation must resolve deterministically.
 #[test]
 fn tie_break_is_stable_by_insertion_ordinal() {
-    fn obs(lat: f64, lon: f64, seq: u64, sensor: &str) -> aeon_contracts::observation::NormalizedObservation {
+    fn obs(
+        lat: f64,
+        lon: f64,
+        seq: u64,
+        sensor: &str,
+    ) -> aeon_contracts::observation::NormalizedObservation {
         let raw = RawObservation {
             schema_version: observation_schema(),
             observation_id: ObservationId(Uuid::from_u128(seq as u128)),
@@ -108,9 +113,17 @@ fn tie_break_is_stable_by_insertion_ordinal() {
             receive_timestamp: OffsetDateTime::UNIX_EPOCH,
             sequence_number: seq,
             coordinate_reference: CoordinateReference::Wgs84Geodetic,
-            measurement: RawMeasurement::Position { x: lon, y: lat, z: 3000.0 },
+            measurement: RawMeasurement::Position {
+                x: lon,
+                y: lat,
+                z: 3000.0,
+            },
             measurement_uncertainty: Known::Known {
-                value: PositionUncertainty { sigma_east_m: 5.0, sigma_north_m: 5.0, sigma_up_m: 20.0 },
+                value: PositionUncertainty {
+                    sigma_east_m: 5.0,
+                    sigma_north_m: 5.0,
+                    sigma_up_m: 20.0,
+                },
             },
             velocity_uncertainty: Known::Unknown,
             classification_claims: vec![],
@@ -122,24 +135,28 @@ fn tie_break_is_stable_by_insertion_ordinal() {
             integrity: Integrity::Verified,
             raw_source_blob_digest: None,
         };
-        normalize(&raw, Provenance {
-            source_observations: vec![raw.observation_id],
-            source_system: SourceSystemId::new("t"),
-            sensor: SensorId::new(sensor),
-            adapter: AdapterId::new("t"),
-            adapter_version: "1".into(),
-            receive_timestamp: OffsetDateTime::UNIX_EPOCH,
-            source_timestamp: OffsetDateTime::UNIX_EPOCH,
-            normalization_version: NORMALIZATION_VERSION.into(),
-            coordinate_transformation_version: COORD_TRANSFORM_VERSION.into(),
-            track_algorithm_version: Some(ALGORITHM_VERSION.into()),
-            model_versions: vec![],
-            configuration_version: "c".into(),
-            build_id: "b".into(),
-            processing_sequence: seq,
-            integrity: Integrity::Verified,
-            transformation_chain: vec![],
-        }).unwrap()
+        normalize(
+            &raw,
+            Provenance {
+                source_observations: vec![raw.observation_id],
+                source_system: SourceSystemId::new("t"),
+                sensor: SensorId::new(sensor),
+                adapter: AdapterId::new("t"),
+                adapter_version: "1".into(),
+                receive_timestamp: OffsetDateTime::UNIX_EPOCH,
+                source_timestamp: OffsetDateTime::UNIX_EPOCH,
+                normalization_version: NORMALIZATION_VERSION.into(),
+                coordinate_transformation_version: COORD_TRANSFORM_VERSION.into(),
+                track_algorithm_version: Some(ALGORITHM_VERSION.into()),
+                model_versions: vec![],
+                configuration_version: "c".into(),
+                build_id: "b".into(),
+                processing_sequence: seq,
+                integrity: Integrity::Verified,
+                transformation_chain: vec![],
+            },
+        )
+        .unwrap()
     }
 
     // Wider gate so that the third observation genuinely gates against both.

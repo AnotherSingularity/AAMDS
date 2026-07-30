@@ -47,10 +47,8 @@ pub fn trace_digest(outcome: &PipelineOutcome) -> String {
         if let aeon_contracts::unknown::Known::Known { value: pu } =
             &u.new_state.state_uncertainty.position
         {
-            let mag = (pu.sigma_east_m.powi(2)
-                + pu.sigma_north_m.powi(2)
-                + pu.sigma_up_m.powi(2))
-                .sqrt();
+            let mag =
+                (pu.sigma_east_m.powi(2) + pu.sigma_north_m.powi(2) + pu.sigma_up_m.powi(2)).sqrt();
             h.update(((mag * 100.0).round() as i64).to_be_bytes());
         }
         // Classification hypotheses — ordered by label so the digest
@@ -59,11 +57,13 @@ pub fn trace_digest(outcome: &PipelineOutcome) -> String {
             .new_state
             .classification_hypotheses
             .iter()
-            .map(|c| (
-                c.label.as_str(),
-                (c.confidence.get() * 10_000.0).round() as i64,
-                c.supporting_source_count,
-            ))
+            .map(|c| {
+                (
+                    c.label.as_str(),
+                    (c.confidence.get() * 10_000.0).round() as i64,
+                    c.supporting_source_count,
+                )
+            })
             .collect();
         classes.sort_by(|a, b| a.0.cmp(b.0));
         h.update((classes.len() as u32).to_be_bytes());
@@ -77,11 +77,13 @@ pub fn trace_digest(outcome: &PipelineOutcome) -> String {
             .new_state
             .source_contributions
             .iter()
-            .map(|s| (
-                s.source_system.as_str(),
-                s.sensor.as_str(),
-                (s.weight * 1000.0).round() as i64,
-            ))
+            .map(|s| {
+                (
+                    s.source_system.as_str(),
+                    s.sensor.as_str(),
+                    (s.weight * 1000.0).round() as i64,
+                )
+            })
             .collect();
         sources.sort();
         h.update((sources.len() as u32).to_be_bytes());

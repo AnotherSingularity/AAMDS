@@ -13,7 +13,9 @@ use aeon_simulation::scenarios::{crossing_two_tracks, single_clean_track};
 use time::OffsetDateTime;
 
 fn main() -> anyhow::Result<()> {
-    let name = std::env::args().nth(1).unwrap_or_else(|| "single_clean_track".into());
+    let name = std::env::args()
+        .nth(1)
+        .unwrap_or_else(|| "single_clean_track".into());
     let mut s = match name.as_str() {
         "single_clean_track" => single_clean_track(),
         "crossing_two_tracks" => crossing_two_tracks(),

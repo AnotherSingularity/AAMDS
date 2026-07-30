@@ -3,11 +3,11 @@
   "toolchain_lock": "security/toolchain.lock",
   "tools": [
     {
-      "expected_version": "9.99.9",
+      "expected_version": "0.22.2",
       "installed_version": "0.22.2",
       "name": "cargo-audit",
       "path": "/home/user/AAMDS/.aeon-tools/bin/cargo-audit",
-      "status": "version_mismatch"
+      "status": "ok"
     },
     {
       "expected_version": "0.5.7",

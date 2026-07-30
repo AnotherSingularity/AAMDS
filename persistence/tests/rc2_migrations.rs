@@ -17,14 +17,13 @@ fn migrations_have_unique_ids_and_are_ordered() {
         v.sort();
         v
     };
-    assert_eq!(ids, sorted, "migrations must be listed in ascending id order");
+    assert_eq!(
+        ids, sorted,
+        "migrations must be listed in ascending id order"
+    );
     ids.sort();
     ids.dedup();
-    assert_eq!(
-        ids.len(),
-        ALL.len(),
-        "migration ids must be unique"
-    );
+    assert_eq!(ids.len(), ALL.len(), "migration ids must be unique");
 }
 
 #[test]

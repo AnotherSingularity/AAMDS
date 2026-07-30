@@ -27,10 +27,8 @@ pub fn run_pipeline<A: SensorAdapter>(
     // Deterministic id source seeded from the scenario name so that
     // running the same scenario twice produces bit-identical track
     // ids (RC2 finding 9).
-    let mut engine = TrackEngine::with_id_source(
-        policy,
-        DeterministicIdSource::from_seed(scenario_name),
-    );
+    let mut engine =
+        TrackEngine::with_id_source(policy, DeterministicIdSource::from_seed(scenario_name));
     let mut updates = Vec::new();
     let mut rejected = 0usize;
     let mut seq = 0u64;

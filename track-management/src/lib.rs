@@ -59,7 +59,10 @@ impl DeterministicIdSource {
     pub fn from_seed_bytes(seed: &[u8]) -> Self {
         use sha2::{Digest, Sha256};
         let s: [u8; 32] = Sha256::digest(seed).into();
-        Self { seed: s, counter: 0 }
+        Self {
+            seed: s,
+            counter: 0,
+        }
     }
     pub fn from_seed(seed: &str) -> Self {
         Self::from_seed_bytes(seed.as_bytes())
