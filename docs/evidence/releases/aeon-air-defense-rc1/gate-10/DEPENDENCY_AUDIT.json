@@ -1,0 +1,29 @@
+{
+  "database": {
+    "advisory-count": 1173,
+    "last-commit": "7c7ccac53056b87f69ac677f15ea2d9a98a6f8e2",
+    "last-updated": "2026-07-29T08:17:10-07:00"
+  },
+  "lockfile": {
+    "dependency-count": 143
+  },
+  "release_id": "aeon-air-defense-rc1",
+  "settings": {
+    "ignore": [],
+    "informational_warnings": [
+      "unmaintained",
+      "unsound",
+      "notice"
+    ],
+    "severity": null,
+    "target_arch": [],
+    "target_os": []
+  },
+  "source_commit": "0249f2b8fb4a65676b217a7f0c0bae1cb93dfa6d",
+  "vulnerabilities": {
+    "count": 0,
+    "found": false,
+    "list": []
+  },
+  "warnings": {}
+}

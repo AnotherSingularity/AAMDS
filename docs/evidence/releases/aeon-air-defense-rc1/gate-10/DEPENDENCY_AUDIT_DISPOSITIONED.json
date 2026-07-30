@@ -1,0 +1,11 @@
+{
+  "release_id": "aeon-air-defense-rc1",
+  "results": [],
+  "source_commit": "0249f2b8fb4a65676b217a7f0c0bae1cb93dfa6d",
+  "summary": {
+    "resolved": 0,
+    "total_findings": 0,
+    "unresolved": 0
+  },
+  "today": "2026-07-30"
+}

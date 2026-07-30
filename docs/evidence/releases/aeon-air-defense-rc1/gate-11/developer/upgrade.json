@@ -1,0 +1,7 @@
+{
+  "detail": "0.1.0 -> 0.1.1, data preserved (2106824f3e0d20471bb4f0b11d26b33d70d8c1824aa7d1fcc4c72dc159248f54)",
+  "op": "upgrade",
+  "release_id": "aeon-air-defense-rc1",
+  "result": "PASS",
+  "source_commit": "0249f2b8fb4a65676b217a7f0c0bae1cb93dfa6d"
+}

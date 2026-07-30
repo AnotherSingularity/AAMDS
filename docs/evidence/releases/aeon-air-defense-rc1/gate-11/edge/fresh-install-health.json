@@ -1,0 +1,9 @@
+{
+  "aeon_home": "/tmp/aeon-edge-loU7vV/home",
+  "api_checked": false,
+  "manifest_ok": true,
+  "profile": "edge",
+  "release_id": "aeon-air-defense-rc1",
+  "source_commit": "0249f2b8fb4a65676b217a7f0c0bae1cb93dfa6d",
+  "version": "0.1.0"
+}

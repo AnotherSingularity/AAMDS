@@ -1,38 +1,69 @@
 # Deployment Verification Matrix
 
-Per directive section 13. Every profile is honestly labelled; the split
-between REPOSITORY_VERIFIED (mechanically tested in this repo's CI) and
-SPONSOR_VALIDATION_REQUIRED (target-environment tests only the sponsor
-can perform) is preserved rather than collapsed to a single "green".
+Per directive section 13 + RC1 freeze directive section 1.
 
-## Allowed statuses
+## Allowed statuses (RC1 freeze taxonomy)
 
 | Status | Meaning |
 |---|---|
-| `VERIFIED` | Package produced + manifest validated + full harness cycle passed in a target-representative environment. |
-| `REPOSITORY_VERIFIED` | Package built, manifest validated, harness cycle passed **inside this repository's CI containers**. Target-hardware validation still required. |
-| `REFERENCE_ONLY` | Profile scaffolding is present but end-to-end run not yet driven. |
-| `SPONSOR_VALIDATION_REQUIRED` | Cannot be mechanically closed in this repository — requires authorized target equipment, security controls, or personnel. |
-| `FAILED` | Harness run failed. Must be repaired before release. |
+| `REPOSITORY_VERIFIED` | Complete lifecycle mechanically tested in an isolated repository-controlled environment. |
+| `PACKAGE_VERIFIED` | Package structure, manifest, integrity, and scripts verified in the repository CI environment, but realistic target operation requires sponsor infrastructure (HA persistence, IdP, KMS/HSM, orchestrator). |
+| `REFERENCE_ONLY` | Documentation or templates exist, but the profile does not yet produce a complete installable package. |
+| `SPONSOR_VALIDATION_REQUIRED` | Repository verification is complete and only authorized environmental validation remains. |
+| `FAILED` | A mandatory repository-controlled verification failed. |
 
-## Per-profile matrix
+## Per-profile matrix (RC1)
 
-| Profile | Package built | Manifest validated | Fresh install | Health | Upgrade | Rollback | Backup | Restore | Offline install | Uninstall | Host env | Remaining sponsor dep | Status |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| developer      | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | linux/x86_64 CI container | none | **REPOSITORY_VERIFIED** |
-| edge           | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | linux/x86_64 CI container | edge-hardware validation, watchdog integration | **REPOSITORY_VERIFIED** |
-| disconnected   | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | linux/x86_64 CI container, network-isolated env branch | true air-gap validation on sponsor hardware | **REPOSITORY_VERIFIED** |
-| fixed-site     | ✅ (scripts) | ✅ (scripts) | — | — | — | — | — | — | — | — | not exercised in CI | redundancy, Postgres-compatible persistence, HA relay | **SPONSOR_VALIDATION_REQUIRED** |
-| data-center    | ✅ (scripts) | ✅ (scripts) | — | — | — | — | — | — | — | — | not exercised in CI | central IdP integration, central observability, DB backup automation | **SPONSOR_VALIDATION_REQUIRED** |
-| private-cloud  | ✅ (scripts) | ✅ (scripts) | — | — | — | — | — | — | — | — | not exercised in CI | infrastructure-as-code, network policy, KMS/HSM, horizontal scaling | **SPONSOR_VALIDATION_REQUIRED** |
+Legend: ✅ mechanically verified in the repository CI-representative environment; ⏳ requires sponsor infrastructure; — not applicable at this profile.
 
-Evidence for the three REPOSITORY_VERIFIED profiles is under
-`docs/evidence/gate-11/{developer,edge,disconnected}/SUMMARY.json` and the
-per-op JSON files alongside.
+| Profile | Package built | Manifest validated | Checksums | SBOM | Config schema | Install proc | Upgrade proc | Rollback proc | Health-check | Backup / restore | Offline install | Host env | Remaining sponsor dep | **Status** |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| developer     | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | linux/x86_64 CI container | none | **REPOSITORY_VERIFIED** |
+| edge          | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | linux/x86_64 CI container | edge-hardware / watchdog integration | **REPOSITORY_VERIFIED** |
+| disconnected  | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | linux/x86_64 CI container, network-isolated shell env | true air-gap validation on sponsor hardware | **REPOSITORY_VERIFIED** |
+| fixed-site    | ✅ | ✅ | ✅ | ✅ | ✅ | scripts + procedure | scripts + procedure | scripts + procedure | scripts | scripts | — | linux/x86_64 CI container (package build only) | redundancy, Postgres-compatible persistence, HA relay, sponsor cluster | **PACKAGE_VERIFIED** |
+| data-center   | ✅ | ✅ | ✅ | ✅ | ✅ | scripts + procedure | scripts + procedure | scripts + procedure | scripts | scripts | — | linux/x86_64 CI container (package build only) | central IdP integration, central observability, database backup automation | **PACKAGE_VERIFIED** |
+| private-cloud | ✅ | ✅ | ✅ | ✅ | ✅ | scripts + procedure | scripts + procedure | scripts + procedure | scripts | scripts | — | linux/x86_64 CI container (package build only) | infrastructure-as-code, network policy templates, KMS/HSM integration, horizontal scaling | **PACKAGE_VERIFIED** |
+
+## What "PACKAGE_VERIFIED" means for fixed-site / data-center / private-cloud
+
+The three server-class profiles share the same build machinery
+(`tools/deployment/build-package.sh`) and the same install / upgrade /
+rollback / backup / restore / healthcheck / uninstall scripts
+(`deployment/_common/scripts/`) as the three REPOSITORY_VERIFIED
+profiles. For those three, the repository CI:
+
+- builds the package,
+- validates its manifest against `deployment/schemas/package-manifest.schema.json`,
+- verifies every artifact's SHA-256 against the shipped `manifest.sha256`,
+- signs the manifest with `dev-hmac-sha256` (non-production; sponsor
+  substitutes `kms-hsm` at target),
+- runs the boundary scanner over the shipped scripts.
+
+What the repository does **not** verify for these three profiles:
+
+- end-to-end install / upgrade / rollback against a redundant or
+  clustered runtime,
+- Postgres-compatible persistence migration and integrity walk,
+- IdP-fronted operator API,
+- KMS/HSM-signed outbound relay,
+- HA failover, backup automation, or DR restore in a target environment.
+
+These require the sponsor's target infrastructure; the
+`deployment/sponsor-validation/` package documents the acceptance
+procedure for each.
 
 ## Reproduction
 
 ```
-./tools/deployment/build-package.sh developer          # or edge / disconnected
-./tools/deployment/test-profile.sh developer full-cycle
+./tools/deployment/build-package.sh <profile>
+./tools/deployment/test-profile.sh <profile> package-integrity
+./tools/deployment/test-profile.sh <profile> full-cycle    # only supported for developer/edge/disconnected
 ```
+
+## Evidence
+
+`docs/evidence/gate-11/{developer,edge,disconnected}/SUMMARY.json` —
+`all_pass=true` for the full-cycle profiles.
+`docs/evidence/gate-11/{fixed-site,data-center,private-cloud}/package-integrity.json` —
+`PASS` for the package-verified profiles.

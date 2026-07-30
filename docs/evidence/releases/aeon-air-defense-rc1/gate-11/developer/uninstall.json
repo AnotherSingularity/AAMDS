@@ -1,0 +1,7 @@
+{
+  "detail": "AEON_HOME emptied",
+  "op": "uninstall",
+  "release_id": "aeon-air-defense-rc1",
+  "result": "PASS",
+  "source_commit": "0249f2b8fb4a65676b217a7f0c0bae1cb93dfa6d"
+}

@@ -1,0 +1,5 @@
+{
+  "op": "package-integrity",
+  "result": "PASS",
+  "detail": "manifest verify + tamper-detect"
+}

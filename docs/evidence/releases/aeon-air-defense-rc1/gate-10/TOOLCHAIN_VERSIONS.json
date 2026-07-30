@@ -1,0 +1,43 @@
+{
+  "generated_at": "harness-controlled",
+  "release_id": "aeon-air-defense-rc1",
+  "source_commit": "0249f2b8fb4a65676b217a7f0c0bae1cb93dfa6d",
+  "toolchain_lock": "security/toolchain.lock",
+  "tools": [
+    {
+      "expected_version": "9.99.9",
+      "installed_version": "0.22.2",
+      "name": "cargo-audit",
+      "path": "/home/user/AAMDS/.aeon-tools/bin/cargo-audit",
+      "status": "version_mismatch"
+    },
+    {
+      "expected_version": "0.5.7",
+      "installed_version": "0.5.7",
+      "name": "cargo-cyclonedx",
+      "path": "/home/user/AAMDS/.aeon-tools/bin/cargo-cyclonedx",
+      "status": "ok"
+    },
+    {
+      "expected_version": "8.28.0",
+      "installed_version": "8.28.0",
+      "name": "gitleaks",
+      "path": "/home/user/AAMDS/.aeon-tools/bin/gitleaks",
+      "status": "ok"
+    },
+    {
+      "expected_version": "from-rust-toolchain",
+      "installed_version": "1.8.0-stable",
+      "name": "rustfmt",
+      "path": "/root/.cargo/bin/rustfmt",
+      "status": "ok"
+    },
+    {
+      "expected_version": "from-rust-toolchain",
+      "installed_version": "0.1.94",
+      "name": "clippy",
+      "path": "/root/.cargo/bin/cargo",
+      "status": "ok"
+    }
+  ]
+}

@@ -182,6 +182,23 @@ See `docs/verification/KNOWN_LIMITATIONS.md` for the full list. Summary:
   FIPS validation of any primitive is made or implied by this
   repository.
 
+## Superseded by RC1
+
+This document reflects the Phase N end-of-session baseline. The
+authoritative status is now
+[`docs/verification/RELEASE_CANDIDATE.md`](RELEASE_CANDIDATE.md) and
+the RC1 evidence package under
+`docs/evidence/releases/aeon-air-defense-rc1/`.
+
+Profile classification at RC1: `developer`, `edge`, `disconnected`
+are **REPOSITORY_VERIFIED**; `fixed-site`, `data-center`,
+`private-cloud` are **PACKAGE_VERIFIED** (was previously described as
+`SPONSOR_VALIDATION_REQUIRED` — the reclassification reflects the fact
+that the shared build machinery mechanically verifies package
+structure + manifest + integrity + shipped scripts for all six
+profiles, even though sponsor infrastructure is still required for
+end-to-end operation of the server-class three).
+
 ## Final conclusion
 
 Given (a) 81 tests all green, (b) mechanical scope-boundary enforcement

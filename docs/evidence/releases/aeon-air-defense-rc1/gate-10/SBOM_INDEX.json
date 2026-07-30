@@ -1,0 +1,81 @@
+{
+  "release_id": "aeon-air-defense-rc1",
+  "sboms": [
+    {
+      "bomFormat": "CycloneDX",
+      "component_count": 33,
+      "path": "docs/evidence/gate-10/sbom/contracts__aeon-contracts.cdx.json",
+      "specVersion": "1.3",
+      "valid": true
+    },
+    {
+      "bomFormat": "CycloneDX",
+      "component_count": 58,
+      "path": "docs/evidence/gate-10/sbom/core-runtime__aeon-core-runtime.cdx.json",
+      "specVersion": "1.3",
+      "valid": true
+    },
+    {
+      "bomFormat": "CycloneDX",
+      "component_count": 34,
+      "path": "docs/evidence/gate-10/sbom/ml-correction__aeon-ml-correction.cdx.json",
+      "specVersion": "1.3",
+      "valid": true
+    },
+    {
+      "bomFormat": "CycloneDX",
+      "component_count": 34,
+      "path": "docs/evidence/gate-10/sbom/normalization__aeon-normalization.cdx.json",
+      "specVersion": "1.3",
+      "valid": true
+    },
+    {
+      "bomFormat": "CycloneDX",
+      "component_count": 103,
+      "path": "docs/evidence/gate-10/sbom/operator-api__aeon-operator-api.cdx.json",
+      "specVersion": "1.3",
+      "valid": true
+    },
+    {
+      "bomFormat": "CycloneDX",
+      "component_count": 50,
+      "path": "docs/evidence/gate-10/sbom/persistence__aeon-persistence.cdx.json",
+      "specVersion": "1.3",
+      "valid": true
+    },
+    {
+      "bomFormat": "CycloneDX",
+      "component_count": 34,
+      "path": "docs/evidence/gate-10/sbom/secure-relay__aeon-secure-relay.cdx.json",
+      "specVersion": "1.3",
+      "valid": true
+    },
+    {
+      "bomFormat": "CycloneDX",
+      "component_count": 34,
+      "path": "docs/evidence/gate-10/sbom/sensor-adapter-sdk__aeon-sensor-adapter-sdk.cdx.json",
+      "specVersion": "1.3",
+      "valid": true
+    },
+    {
+      "bomFormat": "CycloneDX",
+      "component_count": 38,
+      "path": "docs/evidence/gate-10/sbom/simulation__aeon-simulation.cdx.json",
+      "specVersion": "1.3",
+      "valid": true
+    },
+    {
+      "bomFormat": "CycloneDX",
+      "component_count": 34,
+      "path": "docs/evidence/gate-10/sbom/track-management__aeon-track-management.cdx.json",
+      "specVersion": "1.3",
+      "valid": true
+    }
+  ],
+  "source_commit": "0249f2b8fb4a65676b217a7f0c0bae1cb93dfa6d",
+  "summary": {
+    "invalid": 0,
+    "total": 10,
+    "valid": 10
+  }
+}

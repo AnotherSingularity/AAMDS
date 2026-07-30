@@ -34,6 +34,17 @@ may be marked PASS unless the item is mechanically verified.
   store-and-forward queue.
 - Simulation + deterministic replay runner and scenario fixtures.
 
+## RC1 profile classification
+
+- `developer`, `edge`, `disconnected` — **REPOSITORY_VERIFIED**
+  (mechanical full-cycle test in CI-representative container).
+- `fixed-site`, `data-center`, `private-cloud` — **PACKAGE_VERIFIED**
+  (package + manifest + integrity + shipped scripts verified in CI;
+  end-to-end operation against sponsor infrastructure remains
+  sponsor-owned Gate 11B).
+
+See `docs/verification/DEPLOYMENT_VERIFICATION_MATRIX.md`.
+
 ## Explicitly deferred to sponsor integration
 
 The following require sponsor-supplied trust anchors, hardware, or

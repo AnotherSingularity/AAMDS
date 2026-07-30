@@ -1,0 +1,7 @@
+{
+  "exit_code": 0,
+  "raw_output": "docs/evidence/gate-10/STATIC_ANALYSIS.raw.json",
+  "release_id": "aeon-air-defense-rc1",
+  "source_commit": "0249f2b8fb4a65676b217a7f0c0bae1cb93dfa6d",
+  "tool": "clippy"
+}

@@ -1,0 +1,48 @@
+{
+  "all_pass": true,
+  "profile": "edge",
+  "release_id": "aeon-air-defense-rc1",
+  "results": [
+    {
+      "file": "docs/evidence/gate-11/edge/backup-restore.json",
+      "op": "backup-restore",
+      "result": "PASS"
+    },
+    {
+      "file": "docs/evidence/gate-11/edge/configuration-validation.json",
+      "op": null,
+      "result": "PASS"
+    },
+    {
+      "file": "docs/evidence/gate-11/edge/fresh-install.json",
+      "op": "fresh-install",
+      "result": "PASS"
+    },
+    {
+      "file": "docs/evidence/gate-11/edge/offline-install.json",
+      "op": "offline-install",
+      "result": "PASS"
+    },
+    {
+      "file": "docs/evidence/gate-11/edge/package-integrity.json",
+      "op": "package-integrity",
+      "result": "PASS"
+    },
+    {
+      "file": "docs/evidence/gate-11/edge/rollback.json",
+      "op": "rollback",
+      "result": "PASS"
+    },
+    {
+      "file": "docs/evidence/gate-11/edge/uninstall.json",
+      "op": "uninstall",
+      "result": "PASS"
+    },
+    {
+      "file": "docs/evidence/gate-11/edge/upgrade.json",
+      "op": "upgrade",
+      "result": "PASS"
+    }
+  ],
+  "source_commit": "0249f2b8fb4a65676b217a7f0c0bae1cb93dfa6d"
+}

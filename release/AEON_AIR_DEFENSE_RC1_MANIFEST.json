@@ -1,0 +1,117 @@
+{
+  "$schema": "release/AEON_AIR_DEFENSE_RC1_MANIFEST.schema.json",
+  "accreditation_disclaimer": "No claim of accreditation, deployment approval, government certification, combat readiness, plug-and-play compatibility, or FIPS validation of any primitive is made or implied by this release candidate.",
+  "build_timestamp": "deterministic-per-commit",
+  "build_toolchain": {
+    "cargo": "1.94.1",
+    "cargo-audit": "0.22.2",
+    "cargo-cyclonedx": "0.5.7",
+    "clippy": "0.1.94",
+    "gitleaks": "8.28.0",
+    "rustc": "1.94.1",
+    "rustfmt": "1.8.0-stable"
+  },
+  "evidence_generation_commands": [
+    "./tools/security/install-security-tools.sh",
+    "./tools/security/run-security-checks.sh",
+    "cargo test --workspace --all-targets",
+    "./tools/deployment/tests/deployment_regression.sh",
+    "cargo test -p aeon-simulation --test determinism",
+    "./tools/scope_boundary_scan.sh",
+    "for p in developer edge disconnected fixed-site data-center private-cloud; do ./tools/deployment/build-package.sh $p; ./tools/deployment/test-profile.sh $p package-integrity; done",
+    "for p in developer edge disconnected; do ./tools/deployment/test-profile.sh $p full-cycle; done"
+  ],
+  "gate_decisions": {
+    "gate_10": "PASS",
+    "gate_11_overall": "PARTIAL",
+    "gate_11a": "PASS",
+    "gate_11b": "SPONSOR VALIDATION REQUIRED"
+  },
+  "known_limitations_ref": "docs/verification/KNOWN_LIMITATIONS.md",
+  "package_profiles": [
+    {
+      "manifest": "target/deploy/developer/package.manifest.json",
+      "manifest_sha256": "1b4be5e0f06c19b90262fa6857920c81c8947a826d25164a8a9ee31bd31349ee",
+      "package_tree_sha256": "99aea2226389bedc4bf33a2d4865357de4e8c90708abd35cee3cba6e13ca9f05",
+      "path": "target/deploy/developer",
+      "profile": "developer",
+      "sbom_count": 10
+    },
+    {
+      "manifest": "target/deploy/edge/package.manifest.json",
+      "manifest_sha256": "57da6f6ac471f279a872fb18b17fd910cf7b9013f84a050dcef6a4befac357cf",
+      "package_tree_sha256": "be4adecb3a7643e607b19cb1f8b50a2bc21cb7766816e29d762660557becb027",
+      "path": "target/deploy/edge",
+      "profile": "edge",
+      "sbom_count": 10
+    },
+    {
+      "manifest": "target/deploy/disconnected/package.manifest.json",
+      "manifest_sha256": "bc8ca6806e680f352354a5c8a69bd934234ca4ae3d90cd88bf512eb63c1b428b",
+      "package_tree_sha256": "0604250225de3700c3499ad84c6fbcb7ee2d005a95061b0efd728dcc54ebe881",
+      "path": "target/deploy/disconnected",
+      "profile": "disconnected",
+      "sbom_count": 10
+    },
+    {
+      "manifest": "target/deploy/fixed-site/package.manifest.json",
+      "manifest_sha256": "4dba03276c2dc7edcad6affabf9d3cdf061e71ededbfb0f63140693b53334f7f",
+      "package_tree_sha256": "c589d5b8bcb2ae08b51fb16b6d31d122f4d1e0d0b69e4935bbd0ac60e09a3aba",
+      "path": "target/deploy/fixed-site",
+      "profile": "fixed-site",
+      "sbom_count": 10
+    },
+    {
+      "manifest": "target/deploy/data-center/package.manifest.json",
+      "manifest_sha256": "2d6083e3bf0607bcf257e97ae066e84eecc3a05b40dacaa3ce5d763b43666914",
+      "package_tree_sha256": "68d79a5c862d67c284687d0a10b11ff063498c0b9d251643f8d010c422537535",
+      "path": "target/deploy/data-center",
+      "profile": "data-center",
+      "sbom_count": 10
+    },
+    {
+      "manifest": "target/deploy/private-cloud/package.manifest.json",
+      "manifest_sha256": "c2efe8d47ffb957056bdc031c8f785a29b5b366ed5512aba5a5782ea56e9072a",
+      "package_tree_sha256": "4c79aba39a441ccb5189f7516d11b30005dc6d9e07f002dadaf97b62bca336b5",
+      "path": "target/deploy/private-cloud",
+      "profile": "private-cloud",
+      "sbom_count": 10
+    }
+  ],
+  "product": "aeon-air-defense-information-layer",
+  "release_id": "aeon-air-defense-rc1",
+  "release_rating": "MILITARY INTEGRATION-READY RELEASE CANDIDATE: REPOSITORY VERIFIED; SPONSOR PLATFORM VALIDATION: REQUIRED",
+  "repository_url": "https://github.com/AnotherSingularity/AAMDS",
+  "sbom_index": [
+    "docs/evidence/gate-10/sbom/contracts__aeon-contracts.cdx.json",
+    "docs/evidence/gate-10/sbom/core-runtime__aeon-core-runtime.cdx.json",
+    "docs/evidence/gate-10/sbom/ml-correction__aeon-ml-correction.cdx.json",
+    "docs/evidence/gate-10/sbom/normalization__aeon-normalization.cdx.json",
+    "docs/evidence/gate-10/sbom/operator-api__aeon-operator-api.cdx.json",
+    "docs/evidence/gate-10/sbom/persistence__aeon-persistence.cdx.json",
+    "docs/evidence/gate-10/sbom/secure-relay__aeon-secure-relay.cdx.json",
+    "docs/evidence/gate-10/sbom/sensor-adapter-sdk__aeon-sensor-adapter-sdk.cdx.json",
+    "docs/evidence/gate-10/sbom/simulation__aeon-simulation.cdx.json",
+    "docs/evidence/gate-10/sbom/track-management__aeon-track-management.cdx.json"
+  ],
+  "scope_boundary": {
+    "no_aimpoint_or_engagement": true,
+    "no_firing_solution": true,
+    "no_launch_or_guidance": true,
+    "no_weapon_control": true,
+    "relay_message_kinds_count": 4,
+    "runtime_content_scan": "asserted by aeon_contracts::prohibited::scan_json on every RelayEnvelope",
+    "static_scan": "PASS"
+  },
+  "source_branch": "claude/aeon-air-defense-layer-wico33",
+  "source_commit": "0249f2b8fb4a65676b217a7f0c0bae1cb93dfa6d",
+  "sponsor_validation_ref": "deployment/sponsor-validation/",
+  "sponsor_validation_status": "Gate 11B outstanding \u2014 sponsor personnel drive acceptance via deployment/sponsor-validation/",
+  "test_totals": {
+    "deployment_negative_path": 8,
+    "failures": 0,
+    "skips": 0,
+    "total": 89,
+    "unit_property_integration_adversarial": 81
+  }
+}
