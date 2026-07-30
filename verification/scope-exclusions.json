@@ -1,0 +1,124 @@
+{
+  "$schema": "./scope-exclusions.schema.json",
+  "exclusions": [
+    {
+      "path": "contracts/src/prohibited.rs",
+      "layer": "production_source",
+      "reason": "Canonical prohibited-concept registry. Contains the tokens *by design* so downstream code can reference them without redefining. Every consumer's use of these tokens is itself a mandatory review checkpoint.",
+      "owner": "contracts",
+      "created": "2026-07-29"
+    },
+    {
+      "path": "secure-relay/src/allowlist.rs",
+      "layer": "production_source",
+      "reason": "Compile-time relay allowlist — enforces the boundary by naming ONLY the four permitted RelayMessageKind variants. Referenced tokens are the enforcement, not a violation.",
+      "owner": "secure-relay",
+      "created": "2026-07-29"
+    },
+    {
+      "path": "tools/scope/",
+      "layer": "production_source",
+      "reason": "The scanner itself. Must reference every prohibited token to be able to detect it.",
+      "owner": "tooling",
+      "created": "2026-07-30"
+    },
+    {
+      "path": "tools/scope_boundary_scan.sh",
+      "layer": "production_source",
+      "reason": "Legacy RC1 shell scanner. Retained for historical reference; replaced in RC2 by tools/scope/run.py.",
+      "owner": "tooling",
+      "created": "2026-07-30"
+    },
+    {
+      "path": "docs/",
+      "layer": "documentation_claims",
+      "reason": "Prose documentation, threat models, audit findings, and rejection records legitimately quote prohibited terms. Executable / interface-defining content elsewhere is scanned by other layers.",
+      "owner": "docs",
+      "created": "2026-07-30"
+    },
+    {
+      "path": "interface-control-documents/",
+      "layer": "documentation_claims",
+      "reason": "ICDs describe what the boundary excludes.",
+      "owner": "docs",
+      "created": "2026-07-30"
+    },
+    {
+      "path": "release/AEON_AIR_DEFENSE_RC1_REJECTED.txt",
+      "layer": "documentation_claims",
+      "reason": "RC1 rejection marker preserved intact per audit disposition.",
+      "owner": "docs",
+      "created": "2026-07-30"
+    },
+    {
+      "path": "release/AEON_AIR_DEFENSE_RC1_MANIFEST.json",
+      "layer": "documentation_claims",
+      "reason": "RC1 release manifest, preserved frozen. Contains the withdrawn scope-boundary claim; it is a historical record, not a live claim.",
+      "owner": "docs",
+      "created": "2026-07-30"
+    },
+    {
+      "path": "release/AEON_AIR_DEFENSE_RC1_MANIFEST.schema.json",
+      "layer": "documentation_claims",
+      "reason": "RC1 manifest schema, preserved frozen for the RC1 audit record.",
+      "owner": "docs",
+      "created": "2026-07-30"
+    },
+    {
+      "path": "release/rc1-tag-preservation/",
+      "layer": "documentation_claims",
+      "reason": "RC1 tag object bundle + text record. Preserved intact for auditor reproduction.",
+      "owner": "docs",
+      "created": "2026-07-30"
+    },
+    {
+      "path": "docs/evidence/releases/aeon-air-defense-rc1/",
+      "layer": "documentation_claims",
+      "reason": "Frozen RC1 evidence tree. May not be modified per audit disposition.",
+      "owner": "docs",
+      "created": "2026-07-30"
+    },
+    {
+      "path": "docs/evidence/gate-11/",
+      "layer": "documentation_claims",
+      "reason": "RC1 gate-11 evidence tree, superseded by build/evidence/rc2/. Preserved intact.",
+      "owner": "docs",
+      "created": "2026-07-30"
+    },
+    {
+      "path": "docs/evidence/gate-10/",
+      "layer": "documentation_claims",
+      "reason": "RC1 gate-10 evidence, superseded by build/evidence/rc2/gate-10/. Preserved intact.",
+      "owner": "docs",
+      "created": "2026-07-30"
+    },
+    {
+      "path": ".aeon-tools/",
+      "layer": "production_source",
+      "reason": "Locally-installed pinned security tool binaries (gitignored). Third-party tools may embed strings that would false-positive.",
+      "owner": "tooling",
+      "created": "2026-07-30"
+    },
+    {
+      "path": "target/",
+      "layer": "production_source",
+      "reason": "Build output; not source.",
+      "owner": "tooling",
+      "created": "2026-07-30"
+    },
+    {
+      "path": ".git/",
+      "layer": "production_source",
+      "reason": "Git metadata.",
+      "owner": "tooling",
+      "created": "2026-07-30"
+    },
+    {
+      "path": "verification/scope-exclusions.json",
+      "layer": "production_source",
+      "reason": "This file — declares exclusions and their reasons.",
+      "owner": "tooling",
+      "created": "2026-07-30"
+    }
+  ]
+}

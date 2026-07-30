@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "aeon/verification/scope-exclusions.schema.json",
+  "title": "Scope-scanner exclusion manifest",
+  "type": "object",
+  "required": ["exclusions"],
+  "additionalProperties": false,
+  "properties": {
+    "exclusions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "reason", "owner", "created", "layer"],
+        "additionalProperties": false,
+        "properties": {
+          "path":     { "type": "string" },
+          "layer":    { "enum": ["documentation_claims", "production_source", "public_contracts", "schemas", "deployment", "architecture"] },
+          "reason":   { "type": "string" },
+          "owner":    { "type": "string" },
+          "created":  { "type": "string", "format": "date" },
+          "review_after": { "type": "string", "format": "date" }
+        }
+      }
+    }
+  }
+}
