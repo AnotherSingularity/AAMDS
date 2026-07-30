@@ -1,0 +1,5 @@
+{
+  "op": "configuration-validation",
+  "result": "PASS",
+  "detail": "runtime.json fields ok"
+}

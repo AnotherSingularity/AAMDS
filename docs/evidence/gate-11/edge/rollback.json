@@ -1,0 +1,5 @@
+{
+  "op": "rollback",
+  "result": "PASS",
+  "detail": "rolled back to 0.1.0"
+}

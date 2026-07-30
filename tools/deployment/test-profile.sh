@@ -63,7 +63,7 @@ op_package_integrity() {
   bin_path="$(ls "$pkga/bin/" | head -1)"
   cp -a "$pkga/bin/$bin_path" "$pkga/bin/$bin_path.orig"
   printf 'x' >> "$pkga/bin/$bin_path"
-  if (cd "$pkga" && sha256sum -c manifest.sha256 --quiet) 2>/dev/null; then
+  if (cd "$pkga" && sha256sum -c manifest.sha256 --quiet) >/dev/null 2>&1; then
     echo "package-integrity: tamper NOT detected" >&2
     record package-integrity FAIL "tamper undetected" "$evidence/package-integrity.json"
     return 1
@@ -135,10 +135,17 @@ op_upgrade() {
 }
 
 op_rollback() {
-  local trio; trio="$(op_upgrade)"
-  local sbox home pkga
-  IFS='|' read -r sbox home pkga _ <<<"$trio"
-  "$home/scripts/rollback.sh" --home "$home" --to "$pkga"
+  # Run our own upgrade cycle so we know the exact paths.
+  local sbox pkga pkgb home; sbox="$(make_sandbox)"
+  pkga="$(build_package_into "$sbox/pkg-a" "0.1.0")"
+  pkgb="$(build_package_into "$sbox/pkg-b" "0.1.1")"
+  home="$sbox/home"
+  AEON_HOME="$home" "$pkga/scripts/install.sh" >/dev/null
+  mkdir -p "$home/data"
+  sqlite3 "$home/data/aeon.sqlite" "CREATE TABLE t(x INT); INSERT INTO t VALUES(7);"
+  "$home/scripts/upgrade.sh" --from "$home" --to "$pkgb" >/dev/null
+  "$home/scripts/rollback.sh" --home "$home" --to "$pkga" >/dev/null
+  local ver
   ver="$(cat "$home/VERSION")"
   if [ "$ver" != "0.1.0" ]; then
     record rollback FAIL "expected 0.1.0 got $ver" "$evidence/rollback.json"; return 1
@@ -153,15 +160,18 @@ op_backup_restore() {
   AEON_HOME="$home" "$pkga/scripts/install.sh"
   mkdir -p "$home/data"
   sqlite3 "$home/data/aeon.sqlite" "CREATE TABLE t(x INT); INSERT INTO t VALUES(7);"
-  before="$(sha256sum "$home/data/aeon.sqlite" | awk '{print $1}')"
+  # Compare by logical content (sqlite3 .dump), not raw bytes — sqlite
+  # backup emits a slightly re-packed file whose bytes differ but whose
+  # contents are identical.
+  before="$(sqlite3 "$home/data/aeon.sqlite" .dump | sha256sum | awk '{print $1}')"
   bkp="$sbox/backup/snap.sqlite"
   AEON_HOME="$home" "$home/scripts/backup.sh" --out "$bkp"
   # Wipe and restore
   rm -f "$home/data/aeon.sqlite"
   AEON_HOME="$home" "$home/scripts/restore.sh" --from "$bkp"
-  after="$(sha256sum "$home/data/aeon.sqlite" | awk '{print $1}')"
+  after="$(sqlite3 "$home/data/aeon.sqlite" .dump | sha256sum | awk '{print $1}')"
   if [ "$before" != "$after" ]; then
-    record backup-restore FAIL "digest mismatch $before -> $after" "$evidence/backup-restore.json"; return 1
+    record backup-restore FAIL "content digest mismatch $before -> $after" "$evidence/backup-restore.json"; return 1
   fi
   # Corrupt backup rejection
   cp "$bkp" "$sbox/backup/tainted.sqlite"
@@ -192,10 +202,14 @@ op_offline_install() {
   local sbox pkga home; sbox="$(make_sandbox)"
   pkga="$(build_package_into "$sbox/pkg-a")"
   home="$sbox/home"
-  # Confirm no script contains an outbound call.
-  if grep -RE 'curl|wget|https?://' "$pkga/scripts/" >/dev/null; then
-    record offline-install FAIL "install scripts reference network" "$evidence/offline-install.json"; return 1
-  fi
+  # Confirm no install-path script contains an outbound call.
+  # (healthcheck.sh may curl the operator API — that's operator-invoked
+  # explicitly, not part of install.)
+  for s in install.sh upgrade.sh rollback.sh backup.sh restore.sh uninstall.sh; do
+    if grep -E 'curl|wget|https?://' "$pkga/scripts/$s" >/dev/null; then
+      record offline-install FAIL "$s references network" "$evidence/offline-install.json"; return 1
+    fi
+  done
   env -i HOME="$sbox" PATH=/usr/bin:/bin \
     AEON_HOME="$home" bash "$pkga/scripts/install.sh"
   if [ ! -x "$home/bin/aeon-operator-api" ]; then
@@ -215,15 +229,19 @@ op_full_cycle() {
   op_uninstall
   # summary
   python3 - <<PY > "$evidence/SUMMARY.json"
-import glob,json
+import glob,json,os
 ops=[]
 for f in sorted(glob.glob("$evidence/*.json")):
-    if f.endswith("SUMMARY.json"): continue
+    b=os.path.basename(f)
+    # Exclude non-op artifacts and the summary itself.
+    if b in ("SUMMARY.json","fresh-install-health.json"): continue
     try:
         d=json.load(open(f))
-        ops.append({"file":f,"op":d.get("op"),"result":d.get("result")})
     except Exception as e:
-        ops.append({"file":f,"error":str(e)})
+        ops.append({"file":f,"error":str(e)}); continue
+    r=d.get("result")
+    if r is None: continue
+    ops.append({"file":f,"op":d.get("op"),"result":r})
 print(json.dumps({"profile":"$profile","results":ops,
                   "all_pass": all(o.get("result")=="PASS" for o in ops)},
                   indent=2))

@@ -1,0 +1,46 @@
+{
+  "profile": "disconnected",
+  "results": [
+    {
+      "file": "docs/evidence/gate-11/disconnected/backup-restore.json",
+      "op": "backup-restore",
+      "result": "PASS"
+    },
+    {
+      "file": "docs/evidence/gate-11/disconnected/configuration-validation.json",
+      "op": null,
+      "result": "PASS"
+    },
+    {
+      "file": "docs/evidence/gate-11/disconnected/fresh-install.json",
+      "op": "fresh-install",
+      "result": "PASS"
+    },
+    {
+      "file": "docs/evidence/gate-11/disconnected/offline-install.json",
+      "op": "offline-install",
+      "result": "PASS"
+    },
+    {
+      "file": "docs/evidence/gate-11/disconnected/package-integrity.json",
+      "op": "package-integrity",
+      "result": "PASS"
+    },
+    {
+      "file": "docs/evidence/gate-11/disconnected/rollback.json",
+      "op": "rollback",
+      "result": "PASS"
+    },
+    {
+      "file": "docs/evidence/gate-11/disconnected/uninstall.json",
+      "op": "uninstall",
+      "result": "PASS"
+    },
+    {
+      "file": "docs/evidence/gate-11/disconnected/upgrade.json",
+      "op": "upgrade",
+      "result": "PASS"
+    }
+  ],
+  "all_pass": true
+}

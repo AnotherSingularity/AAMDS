@@ -1,0 +1,5 @@
+{
+  "op": "offline-install",
+  "result": "PASS",
+  "detail": "installed without network references"
+}

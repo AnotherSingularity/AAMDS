@@ -1,0 +1,5 @@
+{
+  "op": "backup-restore",
+  "result": "PASS",
+  "detail": "before/after digest match, tainted rejected"
+}

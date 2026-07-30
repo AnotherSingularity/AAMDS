@@ -1,0 +1,46 @@
+{
+  "profile": "developer",
+  "results": [
+    {
+      "file": "docs/evidence/gate-11/developer/backup-restore.json",
+      "op": "backup-restore",
+      "result": "PASS"
+    },
+    {
+      "file": "docs/evidence/gate-11/developer/configuration-validation.json",
+      "op": null,
+      "result": "PASS"
+    },
+    {
+      "file": "docs/evidence/gate-11/developer/fresh-install.json",
+      "op": "fresh-install",
+      "result": "PASS"
+    },
+    {
+      "file": "docs/evidence/gate-11/developer/offline-install.json",
+      "op": "offline-install",
+      "result": "PASS"
+    },
+    {
+      "file": "docs/evidence/gate-11/developer/package-integrity.json",
+      "op": "package-integrity",
+      "result": "PASS"
+    },
+    {
+      "file": "docs/evidence/gate-11/developer/rollback.json",
+      "op": "rollback",
+      "result": "PASS"
+    },
+    {
+      "file": "docs/evidence/gate-11/developer/uninstall.json",
+      "op": "uninstall",
+      "result": "PASS"
+    },
+    {
+      "file": "docs/evidence/gate-11/developer/upgrade.json",
+      "op": "upgrade",
+      "result": "PASS"
+    }
+  ],
+  "all_pass": true
+}
