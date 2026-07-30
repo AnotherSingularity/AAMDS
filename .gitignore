@@ -18,3 +18,5 @@ dist
 Cargo.lock.bak
 /docs/evidence/**/*.tmp
 /verification/**/replay-out
+/build/
+__pycache__/

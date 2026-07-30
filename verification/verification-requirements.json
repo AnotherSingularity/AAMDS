@@ -1,0 +1,153 @@
+{
+  "$schema": "./verification-requirements.schema.json",
+  "manifest_version": 1,
+  "notes": "RC2 mandatory verification requirements. Every step listed here MUST fail-close in verify:all. Suppression, silent skip, or advisory downgrade is not permitted.",
+  "steps": [
+    {
+      "step_id": "format",
+      "description": "Rust formatting (rustfmt).",
+      "command": ["cargo", "fmt", "--all", "--", "--check"],
+      "mandatory": true,
+      "failure_semantics": "fail_closed"
+    },
+    {
+      "step_id": "clippy",
+      "description": "Clippy with warnings denied.",
+      "command": ["cargo", "clippy", "--workspace", "--all-targets", "--", "-D", "warnings"],
+      "mandatory": true,
+      "failure_semantics": "fail_closed"
+    },
+    {
+      "step_id": "build",
+      "description": "Workspace compile.",
+      "command": ["cargo", "build", "--workspace", "--all-targets"],
+      "mandatory": true,
+      "failure_semantics": "fail_closed"
+    },
+    {
+      "step_id": "unit_and_property_tests",
+      "description": "Every workspace unit + property test.",
+      "command": ["cargo", "test", "--workspace", "--all-targets"],
+      "mandatory": true,
+      "minimum_test_count": 85,
+      "failure_semantics": "fail_closed"
+    },
+    {
+      "step_id": "determinism_tests",
+      "description": "RC2 determinism tests.",
+      "command": ["cargo", "test", "-p", "aeon-simulation", "--test", "rc2_determinism"],
+      "mandatory": true,
+      "minimum_test_count": 4,
+      "failure_semantics": "fail_closed"
+    },
+    {
+      "step_id": "replay_cross_process",
+      "description": "Two invocations of emit_trace_digest for the same scenario must produce identical digests.",
+      "command": ["python3", "tools/verify/replay_cross_process.py"],
+      "mandatory": true,
+      "expected_artifact": "build/evidence/rc2/verification/replay-cross-process.json",
+      "failure_semantics": "fail_closed"
+    },
+    {
+      "step_id": "migration_integrity",
+      "description": "Every embedded migration is unique, in-order, and re-runnable to the same schema on a clean DB.",
+      "command": ["cargo", "test", "-p", "aeon-persistence", "--test", "rc2_migrations", "--", "--exact"],
+      "mandatory": true,
+      "minimum_test_count": 3,
+      "failure_semantics": "fail_closed"
+    },
+    {
+      "step_id": "adversarial_persistence",
+      "description": "Adversarial tests over the event store.",
+      "command": ["cargo", "test", "-p", "aeon-persistence", "--test", "adversarial"],
+      "mandatory": true,
+      "minimum_test_count": 2,
+      "failure_semantics": "fail_closed"
+    },
+    {
+      "step_id": "security_toolchain",
+      "description": "Every pinned security tool at the expected version.",
+      "command": ["tools/security/install-security-tools.sh", "--check"],
+      "mandatory": true,
+      "failure_semantics": "fail_closed"
+    },
+    {
+      "step_id": "dependency_audit",
+      "description": "cargo-audit; every finding must be dispositioned before verify:all passes.",
+      "command": ["python3", "tools/gate10/run.py", "--step", "dependency_audit"],
+      "mandatory": true,
+      "expected_artifact": "build/evidence/rc2/gate-10/dependency-audit.json",
+      "failure_semantics": "fail_closed"
+    },
+    {
+      "step_id": "secret_scan",
+      "description": "gitleaks over the entire tracked history.",
+      "command": ["python3", "tools/gate10/run.py", "--step", "secret_scan"],
+      "mandatory": true,
+      "expected_artifact": "build/evidence/rc2/gate-10/secret-scan.json",
+      "failure_semantics": "fail_closed"
+    },
+    {
+      "step_id": "sbom",
+      "description": "Generate per-crate SBOMs; every SBOM must structurally validate.",
+      "command": ["python3", "tools/gate10/run.py", "--step", "sbom"],
+      "mandatory": true,
+      "expected_artifact": "build/evidence/rc2/gate-10/sbom-index.json",
+      "failure_semantics": "fail_closed"
+    },
+    {
+      "step_id": "gate10_consistency",
+      "description": "Cross-check raw evidence against summaries and the gate decision.",
+      "command": ["python3", "tools/gate10/validate.py"],
+      "mandatory": true,
+      "expected_artifact": "build/evidence/rc2/gate-10/gate-10-results.json",
+      "failure_semantics": "fail_closed"
+    },
+    {
+      "step_id": "scope_all",
+      "description": "Layered scope-boundary scan (production source, public contracts, schemas, deployment, architecture, documentation claims).",
+      "command": ["python3", "tools/scope/run.py", "--all"],
+      "mandatory": true,
+      "expected_artifact": "build/evidence/rc2/scope/scope-results.json",
+      "failure_semantics": "fail_closed"
+    },
+    {
+      "step_id": "package_build_all",
+      "description": "Build every supported deployment package.",
+      "command": ["python3", "tools/package/build.py", "--all"],
+      "mandatory": true,
+      "expected_artifact": "build/evidence/rc2/packages/package-build-results.json",
+      "failure_semantics": "fail_closed"
+    },
+    {
+      "step_id": "package_integrity_all",
+      "description": "Verify every built package's signature and per-file digest.",
+      "command": ["python3", "tools/package/verify.py", "--all"],
+      "mandatory": true,
+      "expected_artifact": "build/evidence/rc2/packages/package-integrity-results.json",
+      "failure_semantics": "fail_closed"
+    },
+    {
+      "step_id": "package_negative",
+      "description": "Adversarial package-tamper matrix.",
+      "command": ["python3", "tools/package/negative.py"],
+      "mandatory": true,
+      "expected_artifact": "build/evidence/rc2/packages/package-negative-tests.json",
+      "failure_semantics": "fail_closed"
+    },
+    {
+      "step_id": "documentation_presence",
+      "description": "Required documents exist.",
+      "command": ["python3", "tools/verify/documentation_presence.py"],
+      "mandatory": true,
+      "failure_semantics": "fail_closed"
+    },
+    {
+      "step_id": "evidence_consistency",
+      "description": "Cross-artifact consistency: every summary derives from raw evidence, every source_commit matches HEAD.",
+      "command": ["python3", "tools/verify/evidence_consistency.py"],
+      "mandatory": true,
+      "failure_semantics": "fail_closed"
+    }
+  ]
+}
